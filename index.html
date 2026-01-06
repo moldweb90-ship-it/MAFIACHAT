@@ -791,10 +791,11 @@
                     }
                 }
 
-                if (foundAnswer && foundAnswer === lastBotResponse) {
-                     callManager("Кажется, я хожу по кругу. Давайте позовем человека!");
-                     return;
-                }
+                // Убрана проверка на повторные ответы - пользователь может переспрашивать
+                // if (foundAnswer && foundAnswer === lastBotResponse) {
+                //      callManager("Кажется, я хожу по кругу. Давайте позовем человека!");
+                //      return;
+                // }
 
                 if (!foundAnswer) {
                      // Check context if question is short
