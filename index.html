@@ -69,6 +69,34 @@
             box-shadow: 0 0 0 2px rgba(42, 171, 238, 0.2);
             border-color: rgba(42, 171, 238, 0.4);
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            #chat-window {
+                width: 100vw !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+            }
+            
+            #telegram-widget-container {
+                bottom: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+            
+            #widget-trigger {
+                width: 56px !important;
+                height: 56px !important;
+                margin-right: 16px !important;
+                margin-bottom: 16px !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen font-sans">
@@ -89,8 +117,8 @@
                      <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full relative inline-flex"></span>
                 </div>
                 <div>
-                    <p class="text-[15px] font-bold text-gray-800 leading-tight">Флорист Анна</p>
-                    <p id="bubble-text" class="text-[13px] text-gray-600 leading-snug mt-0.5">
+                    <p class="text-[14px] md:text-[15px] font-bold text-gray-800 leading-tight">Флорист Анна</p>
+                    <p id="bubble-text" class="text-[12px] md:text-[13px] text-gray-600 leading-snug mt-0.5">
                         Я онлайн! 👋<br>Сделаем скидку на первый заказ?
                     </p>
                 </div>
@@ -99,54 +127,54 @@
         </div>
 
         <!-- Chat Window -->
-        <div id="chat-window" class="pointer-events-auto hidden bg-white w-full h-[100dvh] md:w-[380px] md:h-[620px] md:max-h-[85vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden widget-animate border border-gray-200/50">
+        <div id="chat-window" class="pointer-events-auto hidden bg-white w-full h-full md:w-[380px] md:h-[620px] md:max-h-[85vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden widget-animate border border-gray-200/50 fixed inset-0 md:relative md:inset-auto">
             
             <!-- Header -->
-            <div class="bg-[#2AABEE] text-white p-3 px-4 flex items-center justify-between shrink-0 shadow-sm z-20">
-                <div class="flex items-center gap-3 cursor-pointer hover:opacity-90 transition group" onclick="openTelegramLink()">
+            <div class="bg-[#2AABEE] text-white p-2.5 px-3 md:p-3 md:px-4 flex items-center justify-between shrink-0 shadow-sm z-20">
+                <div class="flex items-center gap-2 md:gap-3 cursor-pointer hover:opacity-90 transition group" onclick="openTelegramLink()">
                     <div class="relative">
-                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition">
+                        <div class="w-9 h-9 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition">
                            <img src="images/Eiva.jpg" class="w-full h-full object-cover">
                         </div>
-                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-[#00E096] border-2 border-[#2AABEE] rounded-full"></span>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 bg-[#00E096] border-2 border-[#2AABEE] rounded-full"></span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="font-bold text-[16px] leading-tight tracking-wide">Цветочная Мафия</span>
-                        <span id="status-text" class="text-[13px] text-blue-50 opacity-90 font-medium transition-all duration-300">в сети</span>
+                        <span class="font-bold text-[14px] md:text-[16px] leading-tight tracking-wide">Цветочная Мафия</span>
+                        <span id="status-text" class="text-[11px] md:text-[13px] text-blue-50 opacity-90 font-medium transition-all duration-300">в сети</span>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 md:gap-2">
                     <!-- CALL OPERATOR BUTTON (Default) -->
-                    <button onclick="handleManualOperatorCall()" class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-[12px] font-bold transition backdrop-blur-sm border border-white/10 group shadow-sm">
-                         <span class="relative flex h-2 w-2">
+                    <button onclick="handleManualOperatorCall()" class="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-[12px] font-bold transition backdrop-blur-sm border border-white/10 group shadow-sm">
+                         <span class="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                            <span class="relative inline-flex rounded-full h-full w-full bg-white"></span>
                          </span>
                          <span class="hidden sm:inline">Оператор</span>
-                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:hidden"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:hidden"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                     </button>
 
                     <!-- Close -->
-                    <button onclick="toggleChat()" class="p-1.5 hover:bg-white/10 rounded-full transition text-white/80 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <button onclick="toggleChat()" class="p-1 md:p-1.5 hover:bg-white/10 rounded-full transition text-white/80 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:w-6 md:h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Intro Screen (Name Input) -->
-            <div id="intro-screen" class="hidden absolute inset-0 bg-[#E6EBEF] z-30 flex flex-col items-center justify-center p-6 text-center fade-in" style="top: 60px;">
-                <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-xs relative overflow-hidden">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">👋</div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Давайте знакомиться!</h3>
-                    <p class="text-gray-500 text-sm mb-4">Как к вам обращаться?</p>
+            <div id="intro-screen" class="hidden absolute inset-0 bg-[#E6EBEF] z-30 flex flex-col items-center justify-center p-4 md:p-6 text-center fade-in" style="top: 50px;">
+                <div class="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg w-full max-w-xs relative overflow-hidden">
+                    <div class="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-2xl md:text-3xl">👋</div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-1.5 md:mb-2">Давайте знакомиться!</h3>
+                    <p class="text-gray-500 text-xs md:text-sm mb-3 md:mb-4">Как к вам обращаться?</p>
                     
-                    <input type="text" id="username-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-[#2AABEE] text-center" placeholder="Ваше имя">
+                    <input type="text" id="username-input" class="w-full bg-gray-50 border border-gray-200 rounded-lg md:rounded-xl px-3 md:px-4 py-2.5 md:py-3 mb-2.5 md:mb-3 focus:outline-none focus:ring-2 focus:ring-[#2AABEE] text-center text-sm md:text-base" placeholder="Ваше имя">
                     
-                    <button onclick="saveNameAndStart()" class="w-full bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 rounded-xl transition transform active:scale-95">
+                    <button onclick="saveNameAndStart()" class="w-full bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-2.5 md:py-3 rounded-lg md:rounded-xl transition transform active:scale-95 text-sm md:text-base">
                         Начать чат
                     </button>
-                    <button onclick="skipName()" class="mt-3 text-xs text-gray-400 hover:text-gray-600 underline">Просто спросить</button>
+                    <button onclick="skipName()" class="mt-2 md:mt-3 text-[10px] md:text-xs text-gray-400 hover:text-gray-600 underline">Просто спросить</button>
                 </div>
             </div>
 
@@ -154,12 +182,12 @@
             <div id="chat-interface" class="flex-1 flex flex-col h-full overflow-hidden">
                 
                 <!-- Messages Area -->
-                <div id="messages-area" class="flex-1 tg-bg p-4 overflow-y-auto tg-scrollbar flex flex-col gap-3 relative pb-2">
+                <div id="messages-area" class="flex-1 tg-bg p-2 md:p-4 overflow-y-auto tg-scrollbar flex flex-col gap-2 md:gap-3 relative pb-2">
                     <!-- Messages go here -->
                 </div>
 
                 <!-- Chips (Quick Replies) with Navigation Arrows -->
-                <div class="bg-white/95 backdrop-blur border-t border-gray-100 py-2.5 z-20 shrink-0 relative group/chips">
+                <div class="bg-white/95 backdrop-blur border-t border-gray-100 py-2 md:py-2.5 z-20 shrink-0 relative group/chips">
                     
                     <!-- Left Arrow -->
                     <button onclick="scrollChips('left')" class="hidden md:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center bg-gradient-to-r from-white via-white to-transparent z-10 text-gray-400 hover:text-[#2AABEE] transition opacity-0 group-hover/chips:opacity-100">
@@ -167,20 +195,20 @@
                     </button>
 
                     <!-- Chips Container -->
-                    <div id="chips-container" class="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap px-4 scroll-smooth">
-                        <button onclick="sendChip('Сколько стоит доставка? 🚚')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                    <div id="chips-container" class="flex gap-1.5 md:gap-2 overflow-x-auto no-scrollbar whitespace-nowrap px-3 md:px-4 scroll-smooth">
+                        <button onclick="sendChip('Сколько стоит доставка? 🚚')" class="shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[11px] md:text-[13px] font-semibold rounded-lg md:rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
                             🚚 Доставка
                         </button>
-                         <button onclick="sendChip('Скидка на самовывоз 🔥')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                         <button onclick="sendChip('Скидка на самовывоз 🔥')" class="shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[11px] md:text-[13px] font-semibold rounded-lg md:rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
                             🏃 Самовывоз
                         </button>
-                        <button onclick="sendChip('Цены на цветы 💸')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                        <button onclick="sendChip('Цены на цветы 💸')" class="shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[11px] md:text-[13px] font-semibold rounded-lg md:rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
                             💸 Цены
                         </button>
-                         <button onclick="sendChip('Заказать песню/стих 🎵')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                         <button onclick="sendChip('Заказать песню/стих 🎵')" class="shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[11px] md:text-[13px] font-semibold rounded-lg md:rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
                             🎵 Впечатления
                         </button>
-                        <button onclick="sendChip('Где вы находитесь? 📍')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                        <button onclick="sendChip('Где вы находитесь? 📍')" class="shrink-0 px-2.5 py-1 md:px-3 md:py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[11px] md:text-[13px] font-semibold rounded-lg md:rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
                             📍 Адрес
                         </button>
                     </div>
@@ -192,30 +220,30 @@
                 </div>
 
                 <!-- Input Area (Refined Compact) -->
-                <div class="bg-white px-3 py-2 flex items-end gap-2 z-20 pb-3 border-t border-gray-50">
+                <div class="bg-white px-2 py-1.5 md:px-3 md:py-2 flex items-end gap-1.5 md:gap-2 z-20 pb-2 md:pb-3 border-t border-gray-50 safe-area-inset-bottom">
                     <!-- Paperclip Icon -->
-                    <button onclick="openTelegramLink()" class="w-8 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition" title="Прикрепить (в Telegram)">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    <button onclick="openTelegramLink()" class="w-7 h-8 md:w-8 md:h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition shrink-0" title="Прикрепить (в Telegram)">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="md:w-[22px] md:h-[22px]"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                     </button>
 
-                    <div class="flex-1 bg-gray-100 rounded-[1.2rem] flex items-center px-4 py-2 min-h-[40px] chat-input-wrapper border border-transparent">
-                        <textarea id="chat-input" rows="1" placeholder="Сообщение..." class="w-full bg-transparent border-none focus:ring-0 outline-none text-gray-800 text-[15px] resize-none overflow-hidden py-1 leading-relaxed placeholder-gray-400" style="max-height: 100px;"></textarea>
+                    <div class="flex-1 bg-gray-100 rounded-[1rem] md:rounded-[1.2rem] flex items-center px-3 md:px-4 py-1.5 md:py-2 min-h-[36px] md:min-h-[40px] chat-input-wrapper border border-transparent">
+                        <textarea id="chat-input" rows="1" placeholder="Сообщение..." class="w-full bg-transparent border-none focus:ring-0 outline-none text-gray-800 text-[14px] md:text-[15px] resize-none overflow-hidden py-0.5 md:py-1 leading-relaxed placeholder-gray-400" style="max-height: 100px;"></textarea>
                     </div>
                     
-                    <button id="send-btn" onclick="handleUserSend()" class="w-10 h-10 flex items-center justify-center bg-[#2AABEE] text-white rounded-full transition transform hover:scale-105 active:scale-95 hover:bg-[#229ED9] shadow-sm">
-                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" class="fill-current ml-0.5 mt-0.5"><path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path></svg>
+                    <button id="send-btn" onclick="handleUserSend()" class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-[#2AABEE] text-white rounded-full transition transform hover:scale-105 active:scale-95 hover:bg-[#229ED9] shadow-sm shrink-0">
+                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="fill-current ml-0.5 mt-0.5 md:w-5 md:h-5"><path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path></svg>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Floating Button -->
-        <button id="widget-trigger" onclick="toggleChat()" class="pointer-events-auto group w-14 h-14 md:w-16 md:h-16 bg-[#2AABEE] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(42,171,238,0.4)] hover:shadow-[0_8px_24px_rgba(42,171,238,0.5)] hover:bg-[#229ED9] transition-all duration-300 transform hover:scale-105 z-50 mr-4 mb-4 md:mr-0 md:mb-0 relative">
-            <svg id="icon-closed" class="w-7 h-7 md:w-8 md:h-8 text-white fill-current transition-transform duration-300 transform group-hover:-rotate-12 translate-x-[-1px] translate-y-[1px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path></svg>
-            <svg id="icon-opened" class="w-7 h-7 text-white hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            <span id="notification-badge" class="hidden absolute -top-1 -right-1 flex h-6 w-6 z-50">
+        <button id="widget-trigger" onclick="toggleChat()" class="pointer-events-auto group w-14 h-14 md:w-16 md:h-16 bg-[#2AABEE] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(42,171,238,0.4)] hover:shadow-[0_8px_24px_rgba(42,171,238,0.5)] hover:bg-[#229ED9] transition-all duration-300 transform hover:scale-105 z-50 mr-4 mb-4 md:mr-0 md:mb-0 relative fixed bottom-4 right-4 md:relative md:bottom-auto md:right-auto">
+            <svg id="icon-closed" class="w-6 h-6 md:w-8 md:h-8 text-white fill-current transition-transform duration-300 transform group-hover:-rotate-12 translate-x-[-1px] translate-y-[1px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path></svg>
+            <svg id="icon-opened" class="w-6 h-6 md:w-7 md:h-7 text-white hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span id="notification-badge" class="hidden absolute -top-1 -right-1 flex h-5 w-5 md:h-6 md:w-6 z-50">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span id="badge-count" class="relative inline-flex rounded-full h-6 w-6 bg-red-500 text-white text-[11px] items-center justify-center font-bold border-2 border-white shadow-sm">1</span>
+                <span id="badge-count" class="relative inline-flex rounded-full h-full w-full bg-red-500 text-white text-[10px] md:text-[11px] items-center justify-center font-bold border-2 border-white shadow-sm">1</span>
             </span>
         </button>
 
@@ -742,12 +770,12 @@
             }
 
             msgDiv.innerHTML = `
-                <div class="${bubbleClass} p-2.5 rounded-xl ${isOut ? 'rounded-br-none' : 'rounded-bl-none'} shadow-[0_1px_2px_rgba(0,0,0,0.1)] text-[15px] leading-relaxed min-w-[60px]">
-                    ${isOut ? '' : '<div class="text-[#2AABEE] text-[12px] font-bold mb-1 leading-none">Флорист Анна</div>'}
+                <div class="${bubbleClass} p-2 md:p-2.5 rounded-lg md:rounded-xl ${isOut ? 'rounded-br-none' : 'rounded-bl-none'} shadow-[0_1px_2px_rgba(0,0,0,0.1)] text-[14px] md:text-[15px] leading-relaxed min-w-[60px]">
+                    ${isOut ? '' : '<div class="text-[#2AABEE] text-[11px] md:text-[12px] font-bold mb-0.5 md:mb-1 leading-none">Флорист Анна</div>'}
                     ${imageHtml}
                     ${content}
-                    <div class="flex justify-end items-end gap-1 mt-1 select-none leading-none opacity-60">
-                        <span class="text-[10px] ${isOut ? 'text-[#539634]' : 'text-gray-400'}">${msg.time}</span>
+                    <div class="flex justify-end items-end gap-1 mt-0.5 md:mt-1 select-none leading-none opacity-60">
+                        <span class="text-[9px] md:text-[10px] ${isOut ? 'text-[#539634]' : 'text-gray-400'}">${msg.time}</span>
                         ${checkIcon}
                     </div>
                 </div>
@@ -774,7 +802,7 @@
             typingDiv.id = 'typing-indicator';
             typingDiv.className = 'flex flex-col items-start max-w-[85%] self-start relative message-in pop-in';
             typingDiv.innerHTML = `
-                <div class="bg-white px-3 py-2.5 rounded-xl rounded-bl-none shadow-sm flex gap-1 items-center h-[36px]">
+                <div class="bg-white px-2.5 md:px-3 py-2 md:py-2.5 rounded-lg md:rounded-xl rounded-bl-none shadow-sm flex gap-1 items-center h-[32px] md:h-[36px]">
                     <div class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></div>
                     <div class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></div>
                     <div class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></div>
