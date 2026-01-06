@@ -850,6 +850,19 @@
                 }
             }
 
+            // --- 1.5. СТАТУС ЗАКАЗА (ПРОВЕРЯЕМ ОЧЕНЬ РАНЬШЕ!) ---
+            const orderStatusKeywords = ['где мой заказ', 'где заказ', 'мой заказ', 'заказ где', 'статус заказа', 'статус моего заказа',
+                                        'fm', 'фм', 'статус', 'трек', 'когда доставят', 'когда привезут', 'где сейчас заказ',
+                                        'что с заказом', 'как заказ', 'заказ номер', 'номер заказа', 'хочу узнать где'];
+            if (orderStatusKeywords.some(keyword => lowerText.includes(keyword))) {
+                 const variants = [
+                     "Вопросы по статусу заказа решает менеджер по логистике. Переключаю!",
+                     "По статусу заказа лучше спросить у менеджера — он знает все детали. Соединяю!"
+                 ];
+                 callManager(variants[Math.floor(Math.random() * variants.length)]);
+                 return;
+            }
+
             // --- 2. AUDIO / SONGS (Direct Request) ---
             if (lowerText.includes('песн') || lowerText.includes('стих') || lowerText.includes('музык') || lowerText.includes('аудио') || lowerText.includes('fmvibe')) {
                  setTimeout(() => {
@@ -1123,15 +1136,6 @@
                 return;
             }
 
-            // --- 11. ORDER STATUS (Logistics -> MANAGER) ---
-            if (lowerText.includes('fm') || lowerText.includes('фм') || lowerText.includes('где заказ') || lowerText.includes('статус') || lowerText.includes('трек') || lowerText.includes('когда доставят')) {
-                 const variants = [
-                     "Вопросы по статусу заказа решает менеджер по логистике. Переключаю!",
-                     "По статусу заказа лучше спросить у менеджера — он знает все детали. Соединяю!"
-                 ];
-                 callManager(variants[Math.floor(Math.random() * variants.length)]);
-                 return;
-            }
 
             // --- 5. COMMERCIAL (Partners -> COMMERCE) ---
             if (lowerText.includes('сотрудничеств') || lowerText.includes('коммерч') || lowerText.includes('опт') || lowerText.includes('реклам') || lowerText.includes('постав')) {
