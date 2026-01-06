@@ -1,4 +1,4 @@
-// Vercel Serverless Function for Telegram Bot
+// Vercel Serverless Function for Telegram Bot (WEBHOOK MODE - 24/7)
 const TelegramBot = require('node-telegram-bot-api');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -11,7 +11,21 @@ if (BOT_TOKEN) {
     bot = new TelegramBot(BOT_TOKEN);
 }
 
+// Хранилище связей message_id -> userId (в памяти, для serverless функций)
+// В production лучше использовать Redis/KV, но для начала этого достаточно
+const messageMap = new Map();
+
 module.exports = async (req, res) => {
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Обработка OPTIONS для CORS
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
     // Разрешаем только POST запросы
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -125,7 +139,59 @@ module.exports = async (req, res) => {
             );
         }
 
-        // Обработка текстовых сообщений (не команды)
+        // ПРИОРИТЕТ 1: Обработка ответов менеджеров через REPLY в группе
+        if (update.message && update.message.chat.id === GROUP_ID && update.message.reply_to_message) {
+            const repliedMessageId = update.message.reply_to_message.message_id;
+            const text = update.message.text;
+            
+            // Пытаемся найти userId из messageMap
+            let targetUserId = messageMap.get(repliedMessageId);
+            
+            // Если не нашли в map, пытаемся извлечь из текста сообщения (ID: 123456789)
+            if (!targetUserId && update.message.reply_to_message.text) {
+                const idMatch = update.message.reply_to_message.text.match(/🆔 ID: (\d+)/);
+                if (idMatch) {
+                    targetUserId = parseInt(idMatch[1]);
+                }
+            }
+            
+            if (targetUserId && text && !text.startsWith('/')) {
+                const managerName = update.message.from.first_name + (update.message.from.last_name ? ' ' + update.message.from.last_name : '');
+                
+                try {
+                    await bot.sendMessage(targetUserId, 
+                        `💬 Ответ от менеджера:\n\n${text}\n\n` +
+                        `━━━━━━━━━━━━━━━━\n` +
+                        `Цветочная Мафия 🌹`
+                    );
+                    
+                    await bot.sendMessage(GROUP_ID, 
+                        `✅ Ответ отправлен клиенту\n` +
+                        `Менеджер: ${managerName}`,
+                        { reply_to_message_id: update.message.message_id }
+                    );
+                } catch (err) {
+                    console.error('Ошибка отправки клиенту:', err);
+                    await bot.sendMessage(GROUP_ID, 
+                        `❌ Ошибка отправки клиенту ${targetUserId}.\n` +
+                        `Ошибка: ${err.message || 'Неизвестная ошибка'}\n` +
+                        `Возможно, клиент заблокировал бота.`,
+                        { reply_to_message_id: update.message.message_id }
+                    );
+                }
+                
+                res.status(200).json({ ok: true });
+                return;
+            }
+        }
+
+        // Пропускаем сообщения из группы (кроме команд и reply)
+        if (update.message && update.message.chat.id === GROUP_ID) {
+            res.status(200).json({ ok: true });
+            return;
+        }
+
+        // Обработка текстовых сообщений от клиентов (не команды)
         if (update.message && update.message.text && !update.message.text.startsWith('/')) {
             const chatId = update.message.chat.id;
             const userId = update.message.from.id;
@@ -140,9 +206,20 @@ module.exports = async (req, res) => {
                 `📱 Username: ${username}\n\n` +
                 `💬 Сообщение:\n${text}\n\n` +
                 `━━━━━━━━━━━━━━━━━━━━\n` +
-                `💬 Ответить: /send_${userId} ваш ответ`;
+                `💬 Ответьте на это сообщение, чтобы ответить клиенту`;
 
-            await bot.sendMessage(GROUP_ID, messageToGroup);
+            const sentMessage = await bot.sendMessage(GROUP_ID, messageToGroup);
+            
+            // Сохраняем связь message_id -> userId
+            messageMap.set(sentMessage.message_id, userId);
+            
+            // Очищаем старые записи (оставляем только последние 1000)
+            if (messageMap.size > 1000) {
+                const entries = Array.from(messageMap.entries());
+                messageMap.clear();
+                entries.slice(-500).forEach(([k, v]) => messageMap.set(k, v));
+            }
+            
             await bot.sendMessage(chatId, 
                 '✅ Ваше сообщение отправлено менеджерам!\n\n' +
                 'Мы ответим в течение минуты. ⏱️'
@@ -158,11 +235,17 @@ module.exports = async (req, res) => {
             const photoId = update.message.photo[update.message.photo.length - 1].file_id;
             const caption = update.message.caption || '';
 
-            await bot.sendPhoto(GROUP_ID, photoId, {
+            const sentMessage = await bot.sendPhoto(GROUP_ID, photoId, {
                 caption: `📷 Фото от ${userName} (${username})\n` +
                          `ID: ${userId}\n\n` +
-                         (caption ? `Подпись: ${caption}` : '')
+                         (caption ? `Подпись: ${caption}` : '') +
+                         `\n━━━━━━━━━━━━━━━━━━━━\n` +
+                         `💬 Ответьте на это сообщение, чтобы ответить клиенту`
             });
+            
+            // Сохраняем связь для фото
+            messageMap.set(sentMessage.message_id, userId);
+            
             await bot.sendMessage(chatId, '✅ Фото отправлено менеджерам!');
         }
 
