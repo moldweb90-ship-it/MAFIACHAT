@@ -6,14 +6,15 @@
       "destination": "/api/bot.js"
     },
     {
-      "source": "/(.*\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|eot|mp3|mp4))",
-      "destination": "/$1"
+      "source": "/api/image",
+      "destination": "/api/image.js"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
+  "cleanUrls": false,
   "headers": [
     {
       "source": "/(.*)",
