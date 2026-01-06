@@ -2,11 +2,19 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/bot.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "index.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/api/bot",
+      "dest": "/api/bot.js"
+    },
     {
       "src": "/(.*)",
       "dest": "/index.html"
