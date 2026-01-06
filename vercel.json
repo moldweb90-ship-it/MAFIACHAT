@@ -6,8 +6,8 @@
       "destination": "/api/bot.js"
     },
     {
-      "source": "/images/(.*)",
-      "destination": "/images/$1"
+      "source": "/(.*\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|eot))",
+      "destination": "/$1"
     },
     {
       "source": "/(.*)",
