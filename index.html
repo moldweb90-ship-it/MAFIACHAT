@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Telegram Chat Widget - Flower Mafia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Telegram Custom Scrollbar */
+        .tg-scrollbar::-webkit-scrollbar { width: 4px; }
+        .tg-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .tg-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, 0.15); border-radius: 4px; }
+        .tg-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(0, 0, 0, 0.25); }
+
+        /* Background Pattern */
+        .tg-bg {
+            background-color: #E6EBEF;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%236c8ea0' fill-opacity='0.12' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        /* Message Bubbles */
+        .message-in::before {
+            content: ""; position: absolute; left: -6px; bottom: 6px; width: 10px; height: 10px;
+            background: white; border-bottom-right-radius: 10px;
+            clip-path: polygon(100% 0, 100% 100%, 0 100%);
+        }
+        .message-out::before {
+            content: ""; position: absolute; right: -6px; bottom: 6px; width: 10px; height: 10px;
+            background: #EEFFDE; border-bottom-left-radius: 10px;
+            clip-path: polygon(0 0, 0% 100%, 100% 100%);
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+        .widget-animate { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .pop-in { animation: popIn 0.3s ease-out forwards; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+        /* Typing Dots */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* Hide scrollbar for chips */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Smooth Scroll behavior */
+        .scroll-smooth { scroll-behavior: smooth; }
+
+        /* Input specific */
+        .chat-input-wrapper {
+             transition: all 0.2s ease-in-out;
+        }
+        .chat-input-wrapper:focus-within {
+            background-color: white;
+            box-shadow: 0 0 0 2px rgba(42, 171, 238, 0.2);
+            border-color: rgba(42, 171, 238, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen font-sans">
+
+    <!-- Audio assets -->
+    <audio id="notify-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3" preload="auto"></audio>
+    <audio id="sent-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-message-pop-alert-2354.mp3" preload="auto"></audio>
+
+    <!-- WIDGET CONTAINER -->
+    <div id="telegram-widget-container" class="fixed bottom-0 right-0 md:bottom-6 md:right-6 z-[9999] flex flex-col items-end gap-3 font-sans antialiased pointer-events-none">
+
+        <!-- Welcome Bubble -->
+        <div id="welcome-bubble" class="hidden pointer-events-auto bg-white p-4 rounded-2xl shadow-xl mb-1 mr-4 md:mr-0 max-w-[290px] relative transform transition-all duration-300 origin-bottom-right border border-gray-100 hover:scale-105 cursor-pointer hover:shadow-2xl" onclick="toggleChat()">
+            <div class="flex gap-3 items-center">
+                <div class="relative w-12 h-12 rounded-full shrink-0">
+                     <img src="images/Eiva.jpg" class="w-full h-full object-cover rounded-full border border-gray-100">
+                     <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full animate-ping absolute inline-flex opacity-75"></span>
+                     <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full relative inline-flex"></span>
+                </div>
+                <div>
+                    <p class="text-[15px] font-bold text-gray-800 leading-tight">Флорист Анна</p>
+                    <p id="bubble-text" class="text-[13px] text-gray-600 leading-snug mt-0.5">
+                        Я онлайн! 👋<br>Сделаем скидку на первый заказ?
+                    </p>
+                </div>
+            </div>
+            <button onclick="closeWelcome(event)" class="absolute -top-2 -right-2 bg-white hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md transition border border-gray-100">✕</button>
+        </div>
+
+        <!-- Chat Window -->
+        <div id="chat-window" class="pointer-events-auto hidden bg-white w-full h-[100dvh] md:w-[380px] md:h-[620px] md:max-h-[85vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden widget-animate border border-gray-200/50">
+            
+            <!-- Header -->
+            <div class="bg-[#2AABEE] text-white p-3 px-4 flex items-center justify-between shrink-0 shadow-sm z-20">
+                <div class="flex items-center gap-3 cursor-pointer hover:opacity-90 transition group" onclick="openTelegramLink()">
+                    <div class="relative">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition">
+                           <img src="images/Eiva.jpg" class="w-full h-full object-cover">
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-[#00E096] border-2 border-[#2AABEE] rounded-full"></span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-[16px] leading-tight tracking-wide">Цветочная Мафия</span>
+                        <span id="status-text" class="text-[13px] text-blue-50 opacity-90 font-medium transition-all duration-300">в сети</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <!-- CALL OPERATOR BUTTON (Default) -->
+                    <button onclick="handleManualOperatorCall()" class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-[12px] font-bold transition backdrop-blur-sm border border-white/10 group shadow-sm">
+                         <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                         </span>
+                         <span class="hidden sm:inline">Оператор</span>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:hidden"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </button>
+
+                    <!-- Close -->
+                    <button onclick="toggleChat()" class="p-1.5 hover:bg-white/10 rounded-full transition text-white/80 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Intro Screen (Name Input) -->
+            <div id="intro-screen" class="hidden absolute inset-0 bg-[#E6EBEF] z-30 flex flex-col items-center justify-center p-6 text-center fade-in" style="top: 60px;">
+                <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-xs relative overflow-hidden">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">👋</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Давайте знакомиться!</h3>
+                    <p class="text-gray-500 text-sm mb-4">Как к вам обращаться?</p>
+                    
+                    <input type="text" id="username-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-[#2AABEE] text-center" placeholder="Ваше имя">
+                    
+                    <button onclick="saveNameAndStart()" class="w-full bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 rounded-xl transition transform active:scale-95">
+                        Начать чат
+                    </button>
+                    <button onclick="skipName()" class="mt-3 text-xs text-gray-400 hover:text-gray-600 underline">Просто спросить</button>
+                </div>
+            </div>
+
+            <!-- Main Chat Interface -->
+            <div id="chat-interface" class="flex-1 flex flex-col h-full overflow-hidden">
+                
+                <!-- Messages Area -->
+                <div id="messages-area" class="flex-1 tg-bg p-4 overflow-y-auto tg-scrollbar flex flex-col gap-3 relative pb-2">
+                    <!-- Messages go here -->
+                </div>
+
+                <!-- Chips (Quick Replies) with Navigation Arrows -->
+                <div class="bg-white/95 backdrop-blur border-t border-gray-100 py-2.5 z-20 shrink-0 relative group/chips">
+                    
+                    <!-- Left Arrow -->
+                    <button onclick="scrollChips('left')" class="hidden md:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center bg-gradient-to-r from-white via-white to-transparent z-10 text-gray-400 hover:text-[#2AABEE] transition opacity-0 group-hover/chips:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+
+                    <!-- Chips Container -->
+                    <div id="chips-container" class="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap px-4 scroll-smooth">
+                        <button onclick="sendChip('Сколько стоит доставка? 🚚')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                            🚚 Доставка
+                        </button>
+                         <button onclick="sendChip('Скидка на самовывоз 🔥')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                            🏃 Самовывоз
+                        </button>
+                        <button onclick="sendChip('Цены на цветы 💸')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                            💸 Цены
+                        </button>
+                         <button onclick="sendChip('Заказать песню/стих 🎵')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                            🎵 Впечатления
+                        </button>
+                        <button onclick="sendChip('Где вы находитесь? 📍')" class="shrink-0 px-3 py-1.5 bg-white border border-[#2AABEE]/20 text-[#2AABEE] text-[13px] font-semibold rounded-xl hover:bg-[#2AABEE] hover:text-white transition-all shadow-sm active:scale-95 select-none">
+                            📍 Адрес
+                        </button>
+                    </div>
+
+                    <!-- Right Arrow -->
+                    <button onclick="scrollChips('right')" class="hidden md:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center bg-gradient-to-l from-white via-white to-transparent z-10 text-gray-400 hover:text-[#2AABEE] transition opacity-0 group-hover/chips:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+
+                <!-- Input Area (Refined Compact) -->
+                <div class="bg-white px-3 py-2 flex items-end gap-2 z-20 pb-3 border-t border-gray-50">
+                    <!-- Paperclip Icon -->
+                    <button onclick="openTelegramLink()" class="w-8 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition" title="Прикрепить (в Telegram)">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    </button>
+
+                    <div class="flex-1 bg-gray-100 rounded-[1.2rem] flex items-center px-4 py-2 min-h-[40px] chat-input-wrapper border border-transparent">
+                        <textarea id="chat-input" rows="1" placeholder="Сообщение..." class="w-full bg-transparent border-none focus:ring-0 outline-none text-gray-800 text-[15px] resize-none overflow-hidden py-1 leading-relaxed placeholder-gray-400" style="max-height: 100px;"></textarea>
+                    </div>
+                    
+                    <button id="send-btn" onclick="handleUserSend()" class="w-10 h-10 flex items-center justify-center bg-[#2AABEE] text-white rounded-full transition transform hover:scale-105 active:scale-95 hover:bg-[#229ED9] shadow-sm">
+                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" class="fill-current ml-0.5 mt-0.5"><path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Button -->
+        <button id="widget-trigger" onclick="toggleChat()" class="pointer-events-auto group w-14 h-14 md:w-16 md:h-16 bg-[#2AABEE] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(42,171,238,0.4)] hover:shadow-[0_8px_24px_rgba(42,171,238,0.5)] hover:bg-[#229ED9] transition-all duration-300 transform hover:scale-105 z-50 mr-4 mb-4 md:mr-0 md:mb-0 relative">
+            <svg id="icon-closed" class="w-7 h-7 md:w-8 md:h-8 text-white fill-current transition-transform duration-300 transform group-hover:-rotate-12 translate-x-[-1px] translate-y-[1px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path></svg>
+            <svg id="icon-opened" class="w-7 h-7 text-white hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span id="notification-badge" class="hidden absolute -top-1 -right-1 flex h-6 w-6 z-50">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span id="badge-count" class="relative inline-flex rounded-full h-6 w-6 bg-red-500 text-white text-[11px] items-center justify-center font-bold border-2 border-white shadow-sm">1</span>
+            </span>
+        </button>
+
+    </div>
+
+    <script>
+        /* --- CONFIGURATION --- */
+        const TELEGRAM_USERNAME = 'FlowersMafia_help_bot'; 
+        const WELCOME_DELAY = 10000; 
+        const BUBBLE_DELAY = 3000; 
+
+        /* --- STATE --- */
+        let isOpen = false;
+        let messages = []; 
+        let unreadCount = 0;
+        let hasOpenedOnce = false;
+        let userName = localStorage.getItem('chat_username') || '';
+        let lastBotResponse = ""; // To prevent loops
+        let contextMemory = ""; // To remember dates/details
+
+        /* --- DOM ELEMENTS --- */
+        const els = {
+            window: document.getElementById('chat-window'),
+            intro: document.getElementById('intro-screen'),
+            chatUI: document.getElementById('chat-interface'),
+            usernameInput: document.getElementById('username-input'),
+            trigger: document.getElementById('widget-trigger'),
+            iconClosed: document.getElementById('icon-closed'),
+            iconOpened: document.getElementById('icon-opened'),
+            welcome: document.getElementById('welcome-bubble'),
+            bubbleText: document.getElementById('bubble-text'),
+            badge: document.getElementById('notification-badge'),
+            badgeCount: document.getElementById('badge-count'),
+            area: document.getElementById('messages-area'),
+            input: document.getElementById('chat-input'),
+            status: document.getElementById('status-text'),
+            chips: document.getElementById('chips-container'),
+            audioIn: document.getElementById('notify-sound'),
+            audioOut: document.getElementById('sent-sound')
+        };
+
+        /* --- KNOWLEDGE BASE (THE BRAIN) --- */
+        const knowledgeBase = [
+            {
+                keywords: ['фото', 'сфотограф', 'фотк', 'смс', 'отчет', 'сним'],
+                answer: () => `Конечно! 📸 Мы обязательно делаем фото готового букета перед доставкой и отправляем вам (в мессенджер или по смс). Вы будете уверены, что получателю приедет именно то, что вы заказали!`
+            },
+            {
+                keywords: ['самовывоз', 'заберу', 'приеду', 'адрес', 'где вы', 'находимся'],
+                answer: () => `Мы в двух точках! 📍 <br><br>1. <b>Бульвар Мещерский 3к3</b> (Круглосуточно! 🌙)<br>2. <b>Пр-т Героев Донбасса, 6</b> (с 9 до 21).<br><br>🔥 Кстати, при самовывозе <b>СКИДКА 600₽</b> на букеты! Отложить что-то?`
+            },
+            {
+                keywords: ['достав', 'привезти', 'домой'], // Removed 'заказать' from here
+                answer: () => `По основным районам (Советский, Сормово, Автозавод, Ленинский, Московский, Нижегородский, Канавинский, Приокский) везем <b>БЕСПЛАТНО</b>! 🚁 (с 8:00 до 21:00).<br><br>Оформить заказ на доставку удобнее всего прямо в каталоге на сайте — это займет 1 минуту!`
+            },
+            {
+                keywords: ['дзержинск'], answer: () => `В Дзержинск доставка стоит 1560 руб. 🚗 Удобно оформить заказ на сайте, чтобы менеджер сразу увидел заявку!`
+            },
+            {
+                keywords: ['бор'], answer: () => `На Бор доставка стоит 1000 руб. 🚗 Легче всего оформить через корзину на сайте.`
+            },
+            {
+                keywords: ['кстово'], answer: () => `В Кстово доставка стоит 1600 руб. 🚗 Готовы сделать заказ на сайте?`
+            },
+            {
+                keywords: ['балахна'], answer: () => `В Балахну доставка стоит 1200 руб. 🚗`
+            },
+             {
+                keywords: ['павлово'], answer: () => `В Павлово доставка 3600 руб. Далековато, но цветы доедут свежими! 🌸`
+            },
+             {
+                keywords: ['заволжье'], answer: () => `В Заволжье — 3000 руб. 🚗`
+            },
+            {
+                keywords: ['област', 'за город', 'далеко'],
+                answer: () => `За пределы города считаем 40 руб/км. Напишите точный населенный пункт, я подскажу цену! 👇`
+            },
+            {
+                keywords: ['оплат', 'карт', 'наличн'],
+                answer: () => `Принимаем всё! 💳 Карты (МИР, Visa, MC), переводы, наличные курьеру (с предоплатой).<br>Даже WesternUnion и Золотую Корону берем. Мафия может всё 😉`
+            },
+            {
+                keywords: ['песн', 'стих', 'впечатлени', 'музык', 'fmvibe'],
+                answer: () => `О, это наша фишка! 🎤 Можем заказать песню или стих к букету через <a href="https://fmvibe.ru/" target="_blank" class="text-blue-500 underline">fmvibe.ru</a>. Эффект "Вау" гарантирован! Рассказать подробнее?`
+            },
+            {
+                keywords: ['телефон', 'номер', 'связ', 'звон'],
+                answer: () => `Наш номер: <b>8 (953) 573-69-06</b> 📞<br>Или оставьте свой, менеджер перезвонит через минуту!`
+            },
+            {
+                 // Stricter thanks detection
+                 keywords: ['спасибо', 'благодарю'],
+                 answer: () => `Всегда пожалуйста! 🌹 Если что — я тут.`
+            }
+        ];
+
+        /* --- INITIALIZATION --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            setGreeting();
+
+            // Auto-open logic
+            if (messages.length === 0 && !sessionStorage.getItem('bubble_closed')) {
+                setTimeout(() => { if (!isOpen) { els.welcome.classList.remove('hidden'); els.welcome.classList.add('pop-in'); playSound('in'); } }, BUBBLE_DELAY);
+                setTimeout(() => { if (!isOpen && !hasOpenedOnce) { toggleChat(true); } }, WELCOME_DELAY);
+            } else {
+                renderMessages();
+                scrollToBottom();
+            }
+        });
+
+        /* --- CORE LOGIC --- */
+        function toggleChat(forceOpen = null) {
+            if (forceOpen === true) isOpen = false;
+            
+            isOpen = !isOpen;
+            hasOpenedOnce = true;
+            vibrate();
+
+            if (isOpen) {
+                els.window.classList.remove('hidden');
+                els.iconClosed.classList.add('hidden');
+                els.iconOpened.classList.remove('hidden');
+                els.welcome.classList.add('hidden');
+                resetBadge();
+                
+                // Show Intro Screen if no name and no messages
+                if (!userName && messages.length === 0) {
+                    els.intro.classList.remove('hidden');
+                    els.chatUI.classList.add('hidden');
+                    setTimeout(() => els.usernameInput.focus(), 300);
+                } else {
+                    els.intro.classList.add('hidden');
+                    els.chatUI.classList.remove('hidden');
+                    setTimeout(() => els.input.focus(), 300);
+                    scrollToBottom();
+                }
+
+            } else {
+                els.window.classList.add('hidden');
+                els.iconClosed.classList.remove('hidden');
+                els.iconOpened.classList.add('hidden');
+            }
+        }
+
+        /* --- NAME / INTRO LOGIC --- */
+        function saveNameAndStart() {
+            const name = els.usernameInput.value.trim();
+            if (name) {
+                userName = name;
+                localStorage.setItem('chat_username', userName);
+                els.intro.classList.add('hidden');
+                els.chatUI.classList.remove('hidden');
+                
+                // Greeting message from bot
+                const timeGreeting = getGreetingText();
+                saveMessage(`${timeGreeting}, ${userName}! 👋<br>Я Анна, ваш персональный флорист. Подскажу по ценам, доставке и помогу удивить! Чем могу быть полезна?`, 'in');
+                
+                setTimeout(() => els.input.focus(), 300);
+            } else {
+                els.usernameInput.classList.add('ring-2', 'ring-red-400');
+                setTimeout(() => els.usernameInput.classList.remove('ring-2', 'ring-red-400'), 500);
+            }
+        }
+
+        function skipName() {
+            userName = 'Гость';
+            localStorage.setItem('chat_username', userName);
+            els.intro.classList.add('hidden');
+            els.chatUI.classList.remove('hidden');
+            saveMessage(`Здравствуйте! 👋<br>Я Анна, ваш персональный флорист. Чем могу помочь?`, 'in');
+        }
+
+        /* --- CHIPS SCROLL LOGIC --- */
+        function scrollChips(direction) {
+            const scrollAmount = 150;
+            if (direction === 'left') {
+                els.chips.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                els.chips.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        /* --- SUGGEST WEBSITE ORDER --- */
+        function suggestWebsite() {
+            vibrate();
+            setStatus('печатает...');
+            showTyping();
+            
+            setTimeout(() => {
+                removeTyping();
+                setStatus('в сети');
+                
+                const siteMsg = `
+                    <div class="font-bold mb-1">⚡️ Легко! Закажите на сайте</div>
+                    Это самый быстрый способ. В каталоге есть все актуальные букеты.
+                    <br><br>
+                    Оформление займет всего минуту, и флористы сразу начнут собирать заказ! 👇
+                    <br><br>
+                    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'}); toggleChat();" class="w-full bg-[#2AABEE] text-white font-bold py-2.5 rounded-xl hover:bg-[#229ED9] transition flex items-center justify-center gap-2 transform active:scale-95 shadow-md">
+                        Перейти в каталог
+                    </button>
+                    <div class="mt-3 text-xs text-center text-gray-400">
+                        Сложно выбрать? <a href="#" onclick="callFlorist(); return false;" class="underline hover:text-gray-600">Написать флористу</a>
+                    </div>
+                `;
+                saveMessage(siteMsg, 'in');
+                playSound('in');
+            }, 800);
+        }
+
+        /* --- CALL SPECIALISTS LOGIC --- */
+        
+        // 1. FLORIST (For bouquet selection, custom orders)
+        function callFlorist(reasonText) {
+            vibrate();
+            setStatus('зовет флориста...');
+            showTyping();
+            
+            let contextMsg = "";
+            if (contextMemory) {
+                 contextMsg = `<div class="bg-blue-50 p-2 rounded text-xs text-gray-600 mb-2 border border-blue-100">📝 Я передала флористу: "${contextMemory}"</div>`;
+            }
+            
+            setTimeout(() => {
+                removeTyping();
+                setStatus('в сети');
+                
+                const operatorMsg = `
+                    <div class="font-bold mb-1">🌷 Связь с флористом</div>
+                    ${reasonText || "Флорист сейчас у витрины и поможет с выбором. Переходим в Telegram?"}
+                    <br><br>
+                    ${contextMsg}
+                    <button onclick="openTelegramLink()" class="w-full bg-[#FF7EB3] text-white font-bold py-2.5 rounded-xl hover:bg-[#FF65A3] transition flex items-center justify-center gap-2 transform active:scale-95 shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.35l-1.99 9.38c-.15.68-.56.84-1.13.52l-3.14-2.31-1.52 1.46c-.17.17-.31.31-.63.31l.22-3.19 5.81-5.25c.25-.22-.06-.35-.39-.12l-7.18 4.52-3.09-.97c-.67-.21-.68-.67.14-.99l12.08-4.66c.56-.21 1.05.13.82 1.3z"/></svg>
+                        Написать флористу
+                    </button>
+                `;
+                saveMessage(operatorMsg, 'in');
+                playSound('in');
+            }, 800);
+        }
+
+        // 2. MANAGER (For logistics, FM orders, technical)
+        function callManager(reasonText) {
+            vibrate();
+            setStatus('зовет менеджера...');
+            showTyping();
+            
+            let contextMsg = "";
+            if (contextMemory) {
+                 contextMsg = `<div class="bg-gray-100 p-2 rounded text-xs text-gray-600 mb-2 border border-gray-200">📝 Запрос: "${contextMemory}"</div>`;
+            }
+
+            setTimeout(() => {
+                removeTyping();
+                setStatus('в сети');
+                
+                const operatorMsg = `
+                    <div class="font-bold mb-1">👔 Связь с менеджером</div>
+                    ${reasonText || "По вопросам доставки и статуса заказа лучше писать сюда."}
+                    <br><br>
+                    ${contextMsg}
+                    <button onclick="openTelegramLink()" class="w-full bg-[#2AABEE] text-white font-bold py-2.5 rounded-xl hover:bg-[#229ED9] transition flex items-center justify-center gap-2 transform active:scale-95 shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.35l-1.99 9.38c-.15.68-.56.84-1.13.52l-3.14-2.31-1.52 1.46c-.17.17-.31.31-.63.31l.22-3.19 5.81-5.25c.25-.22-.06-.35-.39-.12l-7.18 4.52-3.09-.97c-.67-.21-.68-.67.14-.99l12.08-4.66c.56-.21 1.05.13.82 1.3z"/></svg>
+                        Написать менеджеру
+                    </button>
+                `;
+                saveMessage(operatorMsg, 'in');
+                playSound('in');
+            }, 800);
+        }
+
+        // 3. COMMERCE (B2B)
+        function callCommerce(reasonText) {
+             vibrate();
+            setStatus('зовет отдел...');
+            showTyping();
+
+            setTimeout(() => {
+                removeTyping();
+                setStatus('в сети');
+                
+                const operatorMsg = `
+                    <div class="font-bold mb-1">💼 Коммерческий отдел</div>
+                    По вопросам сотрудничества переходите в этот чат.
+                    <br><br>
+                    <button onclick="openTelegramLink()" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-xl hover:bg-black transition flex items-center justify-center gap-2 transform active:scale-95 shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.35l-1.99 9.38c-.15.68-.56.84-1.13.52l-3.14-2.31-1.52 1.46c-.17.17-.31.31-.63.31l.22-3.19 5.81-5.25c.25-.22-.06-.35-.39-.12l-7.18 4.52-3.09-.97c-.67-.21-.68-.67.14-.99l12.08-4.66c.56-.21 1.05.13.82 1.3z"/></svg>
+                        Отдел партнеров
+                    </button>
+                `;
+                saveMessage(operatorMsg, 'in');
+                playSound('in');
+            }, 800);
+        }
+        
+        function handleManualOperatorCall() {
+            // General fallback
+            callManager("Перевожу вас в Telegram для связи.");
+        }
+
+        /* --- MESSAGING SYSTEM (THE BRAIN) --- */
+        function sendChip(text) {
+            vibrate();
+            els.input.value = text;
+            handleUserSend();
+        }
+
+        function handleUserSend() {
+            const text = els.input.value.trim();
+            if (!text) return;
+
+            saveMessage(text, 'out');
+            els.input.value = '';
+            els.input.style.height = 'auto';
+            playSound('out');
+
+            // --- 0. CAPTURE CONTEXT ---
+            // Try to find dates/times to pass to the operator
+            const timeMatch = text.match(/(\d{1,2}[:.]\d{2})|завтра|сегодня|послезавтра/i);
+            if (timeMatch) {
+                contextMemory = text; // Remember the whole message if it contains time
+            }
+
+            const lowerText = text.toLowerCase();
+
+            // --- 2. AUDIO / SONGS (Direct Request) ---
+            if (lowerText.includes('песн') || lowerText.includes('стих') || lowerText.includes('музык') || lowerText.includes('аудио') || lowerText.includes('fmvibe')) {
+                 setTimeout(() => {
+                    setStatus('печатает...');
+                    showTyping();
+                    setTimeout(() => {
+                        removeTyping();
+                        setStatus('в сети');
+                        const answer = `Хотите произвести фурор? 🎤🔥\n\nЗакажите **персональную песню** или **музыкальное поздравление** в нашем аудио-продакшне!\n\nЭто не просто открытка, а настоящая эмоция. Идеальное дополнение к букету. 🌹🎶\n\nСлушайте примеры и заказывайте тут: <a href="https://fmvibe.ru/" target="_blank" class="text-blue-500 font-bold underline">fmvibe.ru</a>`;
+                        saveMessage(answer, 'in');
+                        playSound('in');
+                    }, 1000);
+                }, 500);
+                return;
+            }
+
+            // --- 3. POSTCARDS (Free + Upsell) ---
+            if (lowerText.includes('открытк') || lowerText.includes('записк') || lowerText.includes('подпис') || lowerText.includes('текст') || lowerText.includes('пожелани') || lowerText.includes('слова')) {
+                 setTimeout(() => {
+                    setStatus('печатает...');
+                    showTyping();
+                    setTimeout(() => {
+                        removeTyping();
+                        setStatus('в сети');
+                        const answer = `Мини-открытка с вашими теплыми словами — **бесплатно** к каждому букету! 💌 Просто напишите текст при оформлении заказа.\n\n💡 <b>Идея:</b> Хотите сделать поздравление незабываемым? Добавьте к букету <b>аудио-открытку</b> или песню!\n\n<a href="https://fmvibe.ru/" target="_blank" class="text-blue-500 underline">Послушать примеры на fmvibe.ru</a>`;
+                        saveMessage(answer, 'in');
+                        playSound('in');
+                    }, 1000);
+                }, 500);
+                return;
+            }
+
+            // --- 4. HELP / CONFUSION ---
+            if (lowerText.includes('что делать') || lowerText.includes('как быть') || lowerText.includes('не понимаю') || lowerText.includes('помоги') || lowerText.includes('инструкц')) {
+                 setTimeout(() => {
+                    setStatus('печатает...');
+                    showTyping();
+                    setTimeout(() => {
+                         removeTyping();
+                         setStatus('в сети');
+                         // Show split choice
+                         const helpMsg = `
+                            Давайте разберемся! 🤝
+                            <br><br>
+                            🔹 <b>Хотите заказать цветы?</b><br>
+                            Это лучше сделать в каталоге на сайте.<br>
+                            <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); toggleChat(); return false;" class="text-blue-500 font-bold underline">Перейти в каталог</a>
+                            <br><br>
+                            🔹 <b>Есть сложный вопрос?</b><br>
+                            Напишите менеджеру в Telegram, он поможет.
+                            <button onclick="openTelegramLink()" class="mt-2 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-lg transition text-xs flex items-center justify-center gap-1">
+                                Написать менеджеру
+                            </button>
+                        `;
+                        saveMessage(helpMsg, 'in');
+                        playSound('in');
+                    }, 1000);
+                }, 500);
+                return;
+            }
+
+            // --- 4. ORDER STATUS (Logistics -> MANAGER) ---
+            if (lowerText.includes('fm') || lowerText.includes('фм') || lowerText.includes('где заказ') || lowerText.includes('статус') || lowerText.includes('трек') || lowerText.includes('когда доставят')) {
+                 callManager("Вопросы по статусу заказа решает менеджер по логистике. Переключаю!");
+                 return;
+            }
+
+            // --- 5. COMMERCIAL (Partners -> COMMERCE) ---
+            if (lowerText.includes('сотрудничеств') || lowerText.includes('коммерч') || lowerText.includes('опт') || lowerText.includes('реклам') || lowerText.includes('постав')) {
+                callCommerce("Вопросы сотрудничества рассматривает коммерческий отдел.");
+                return;
+            }
+            
+            // --- 6. INTERNATIONAL / NO CALL ---
+            if (lowerText.includes('не в россии') || lowerText.includes('заграниц') || lowerText.includes('без звонка') || lowerText.includes('не звон')) {
+                setTimeout(() => {
+                    setStatus('печатает...');
+                    showTyping();
+                    setTimeout(() => {
+                        removeTyping();
+                        setStatus('в сети');
+                        saveMessage(`Без проблем! 🙌 <br>Мы принимаем оплату через <b>Western Union, MoneyGram</b> и иностранные карты.<br><br>Звонить не будем, все обсудим в переписке.`, 'in');
+                        callManager("Напишите менеджеру для получения реквизитов."); 
+                    }, 1200);
+                }, 500);
+                return;
+            }
+
+            // --- 7. WEBSITE SALES PUSH (Very Specific now) ---
+            // removed "хочу", "давай", "согласен" from global triggers to avoid false positives
+            const explicitSalesTriggers = ['оформить заказ', 'заказать на сайте', 'заказать доставку', 'оформить доставку', 'заказать букет'];
+            
+            if (explicitSalesTriggers.some(w => lowerText.includes(w))) {
+                suggestWebsite();
+                return;
+            }
+
+            // --- 8. FLOWER SPECIFICS (Choice -> FLORIST) ---
+            if (lowerText.includes('посоветуй') || lowerText.includes('выбрать') || lowerText.includes('какие есть') || lowerText.includes('свеж') || lowerText.includes('флорист') || lowerText.includes('розы') || lowerText.includes('пионы')) {
+                callFlorist("Флорист сейчас в салоне и пришлет фото свежих цветов.");
+                return;
+            }
+
+            // --- 9. GENERAL OPERATOR ---
+            if (lowerText.includes('оператор') || lowerText.includes('человек') || lowerText.includes('менеджер') || lowerText.includes('живой')) {
+                callManager();
+                return;
+            }
+
+            setStatus('печатает...');
+            showTyping();
+            
+            // --- 10. FALLBACK KNOWLEDGE BASE ---
+            setTimeout(() => {
+                removeTyping();
+                setStatus('в сети');
+                
+                let foundAnswer = null;
+                
+                for (let entry of knowledgeBase) {
+                    if (entry.keywords.some(k => lowerText.includes(k))) {
+                        foundAnswer = entry.answer();
+                        break;
+                    }
+                }
+
+                if (foundAnswer && foundAnswer === lastBotResponse) {
+                     callManager("Кажется, я хожу по кругу. Давайте позовем человека!");
+                     return;
+                }
+
+                if (!foundAnswer) {
+                     // Check context if question is short
+                     if(text.length < 20 && (text.includes('?'))) {
+                         callManager("Вопрос требует уточнения. Перевожу на менеджера!");
+                     } else {
+                         callManager("К сожалению, я не нашел ответа в своей базе. Но менеджер точно знает! Соединить?");
+                     }
+                     return;
+                }
+
+                saveMessage(foundAnswer, 'in');
+                playSound('in');
+                vibrate();
+                if(!isOpen) incrementBadge(); 
+
+            }, 800 + Math.random() * 800); 
+        }
+
+        function saveMessage(text, dir, image = null) {
+            if(dir === 'in') lastBotResponse = text;
+
+            const msg = {
+                text: text,
+                type: dir,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                image: image
+            };
+            messages.push(msg);
+            localStorage.setItem('chat_history', JSON.stringify(messages));
+            renderOneMessage(msg);
+            scrollToBottom();
+        }
+
+        function renderMessages() {
+            els.area.innerHTML = '';
+            els.area.innerHTML += `
+                <div class="flex justify-center my-2 opacity-80">
+                    <span class="bg-black/20 text-white text-[11px] px-2 py-0.5 rounded-full font-medium shadow-sm backdrop-blur-sm">Сегодня</span>
+                </div>
+            `;
+            messages.forEach(msg => renderOneMessage(msg));
+        }
+
+        function renderOneMessage(msg) {
+            const isOut = msg.type === 'out';
+            const msgDiv = document.createElement('div');
+            // Changed leading-snug to leading-relaxed for better spacing
+            msgDiv.className = `flex flex-col ${isOut ? 'items-end max-w-[85%] self-end message-out' : 'items-start max-w-[85%] self-start message-in'} relative group pop-in`;
+            
+            const bubbleClass = isOut ? 'bg-[#EEFFDE] text-gray-900' : 'bg-white text-gray-900';
+            const checkIcon = isOut ? '<span class="text-[#2AABEE] text-xs font-bold ml-1">✓✓</span>' : '';
+
+            let imageHtml = '';
+            if (msg.image) {
+                imageHtml = `
+                    <div class="mb-1 rounded-lg overflow-hidden relative cursor-pointer group/img" onclick="openTelegramLink()">
+                        <img src="${msg.image}" class="w-full h-auto object-cover max-h-[160px] group-hover/img:opacity-90 transition">
+                    </div>
+                `;
+            }
+
+            // Simple HTML support
+            let content = msg.text;
+            if(!content.includes('<div') && !content.includes('<button')) {
+                 content = content.replace(/\n/g, '<br>');
+            }
+
+            msgDiv.innerHTML = `
+                <div class="${bubbleClass} p-2.5 rounded-xl ${isOut ? 'rounded-br-none' : 'rounded-bl-none'} shadow-[0_1px_2px_rgba(0,0,0,0.1)] text-[15px] leading-relaxed min-w-[60px]">
+                    ${isOut ? '' : '<div class="text-[#2AABEE] text-[12px] font-bold mb-1 leading-none">Флорист Анна</div>'}
+                    ${imageHtml}
+                    ${content}
+                    <div class="flex justify-end items-end gap-1 mt-1 select-none leading-none opacity-60">
+                        <span class="text-[10px] ${isOut ? 'text-[#539634]' : 'text-gray-400'}">${msg.time}</span>
+                        ${checkIcon}
+                    </div>
+                </div>
+            `;
+            els.area.appendChild(msgDiv);
+        }
+
+        /* --- UTILS --- */
+        function getGreetingText() {
+            const hour = new Date().getHours();
+            if (hour < 6) return 'Доброй ночи';
+            if (hour < 12) return 'Доброе утро';
+            if (hour < 18) return 'Добрый день';
+            return 'Добрый вечер';
+        }
+
+        function setGreeting() {
+            const greeting = getGreetingText();
+            els.bubbleText.innerHTML = `${greeting}! 👋<br>Сделаем скидку на первый заказ?`;
+        }
+
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex flex-col items-start max-w-[85%] self-start relative message-in pop-in';
+            typingDiv.innerHTML = `
+                <div class="bg-white px-3 py-2.5 rounded-xl rounded-bl-none shadow-sm flex gap-1 items-center h-[36px]">
+                    <div class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></div>
+                    <div class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></div>
+                    <div class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></div>
+                </div>
+            `;
+            els.area.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function removeTyping() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        function setStatus(text) {
+            els.status.innerText = text;
+            if(text === 'печатает...' || text.includes('зовет')) els.status.classList.add('animate-pulse');
+            else els.status.classList.remove('animate-pulse');
+        }
+
+        function vibrate() { if (navigator.vibrate) navigator.vibrate(10); }
+        function playSound(type) { try { const audio = type === 'out' ? els.audioOut : els.audioIn; audio.currentTime = 0; audio.play().catch(e => {}); } catch(e){} }
+        function scrollToBottom() { els.area.scrollTop = els.area.scrollHeight; }
+        function loadHistory() { const saved = localStorage.getItem('chat_history'); if (saved) messages = JSON.parse(saved); }
+        function openTelegramLink() { window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank'); }
+        function closeWelcome(e) { if(e) e.stopPropagation(); els.welcome.classList.add('hidden'); sessionStorage.setItem('bubble_closed', 'true'); }
+        function incrementBadge() { unreadCount++; els.badgeCount.innerText = unreadCount; els.badge.classList.remove('hidden'); }
+        function resetBadge() { unreadCount = 0; els.badge.classList.add('hidden'); }
+
+        els.input.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
+        els.input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleUserSend(); } });
+        els.usernameInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { saveNameAndStart(); } });
+
+    </script>
+</body>
+</html>
+

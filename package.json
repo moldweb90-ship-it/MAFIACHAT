@@ -1,0 +1,19 @@
+{
+  "name": "flower-mafia-chat-widget",
+  "version": "1.0.0",
+  "description": "Telegram Chat Widget for Flower Mafia",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "bot": "node telegram-bot.js"
+  },
+  "keywords": ["chat", "widget", "telegram"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.64.0"
+  }
+}
+
