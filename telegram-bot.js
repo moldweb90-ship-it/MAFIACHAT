@@ -6,7 +6,12 @@ const GROUP_ID = -1003691437577; // ID вашей группы
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
+// Хранилище связи message_id группы -> userId клиента
+const messageMap = new Map();
+
 console.log('🤖 Бот запущен! Ожидаю сообщения...\n');
+console.log('Токен:', BOT_TOKEN.substring(0, 10) + '...');
+console.log('Группа ID:', GROUP_ID);
 
 // Обработка команды /start
 bot.onText(/\/start/, (msg) => {
@@ -117,8 +122,74 @@ bot.on('message', (msg) => {
     const username = msg.from.username ? '@' + msg.from.username : 'без username';
     const text = msg.text;
 
+    console.log('📨 Получено сообщение:', text, 'от', userName, `(${userId})`, `в чате ${chatId}`);
+
+    // ПРИОРИТЕТ 1: Обработка ответов менеджеров через REPLY в группе
+    if (chatId === GROUP_ID && msg.reply_to_message) {
+        const repliedMessageId = msg.reply_to_message.message_id;
+        const targetUserId = messageMap.get(repliedMessageId);
+        
+        console.log(`🔍 REPLY обнаружен!`);
+        console.log(`   - ID сообщения на которое ответили: ${repliedMessageId}`);
+        console.log(`   - Найденный userId клиента: ${targetUserId}`);
+        console.log(`   - Текст ответа: ${text}`);
+        console.log(`   - Все сохраненные связи:`, Array.from(messageMap.entries()));
+        
+        if (targetUserId && text && !text.startsWith('/')) {
+            const managerName = msg.from.first_name + (msg.from.last_name ? ' ' + msg.from.last_name : '');
+            
+            console.log(`📤 Менеджер ${managerName} отвечает клиенту ${targetUserId}: ${text}`);
+            
+            // Отправляем ответ клиенту
+            bot.sendMessage(targetUserId, 
+                `💬 Ответ от менеджера:\n\n${text}\n\n` +
+                `━━━━━━━━━━━━━━━━\n` +
+                `Цветочная Мафия 🌹`
+            )
+            .then(() => {
+                console.log(`✅ Сообщение успешно отправлено клиенту ${targetUserId}`);
+                bot.sendMessage(GROUP_ID, 
+                    `✅ Ответ отправлен клиенту\n` +
+                    `Менеджер: ${managerName}`,
+                    { reply_to_message_id: msg.message_id }
+                );
+            })
+            .catch((err) => {
+                console.error('❌ Ошибка отправки клиенту:', err);
+                console.error('Детали ошибки:', JSON.stringify(err, null, 2));
+                bot.sendMessage(GROUP_ID, 
+                    `❌ Ошибка отправки клиенту ${targetUserId}.\n` +
+                    `Ошибка: ${err.message || 'Неизвестная ошибка'}\n` +
+                    `Возможно, клиент заблокировал бота.`,
+                    { reply_to_message_id: msg.message_id }
+                );
+            });
+            
+            return; // Не обрабатываем дальше
+        } else {
+            console.log(`⚠️ Не удалось отправить ответ:`);
+            console.log(`   - targetUserId: ${targetUserId}`);
+            console.log(`   - text: ${text}`);
+            console.log(`   - Начинается с /: ${text && text.startsWith('/')}`);
+            
+            if (!targetUserId) {
+                bot.sendMessage(GROUP_ID, 
+                    `⚠️ Не найден ID клиента для этого сообщения.\n` +
+                    `Попробуйте использовать команду: /send_${msg.reply_to_message.from?.id || 'USERID'} ваш ответ`,
+                    { reply_to_message_id: msg.message_id }
+                );
+            }
+        }
+    }
+
+    // Пропускаем сообщения из группы (кроме команд)
+    if (chatId === GROUP_ID) {
+        return;
+    }
+
     // Пропускаем команды (они обрабатываются отдельно)
     if (text && text.startsWith('/')) {
+        console.log('⏭️ Пропущена команда:', text);
         return;
     }
 
@@ -131,10 +202,16 @@ bot.on('message', (msg) => {
             `📱 Username: ${username}\n\n` +
             `💬 Сообщение:\n${text}\n\n` +
             `━━━━━━━━━━━━━━━━━━━━\n` +
-            `💬 Ответить: /send_${userId} ваш ответ`;
+            `💬 Ответьте на это сообщение, чтобы ответить клиенту`;
 
         bot.sendMessage(GROUP_ID, messageToGroup)
-            .then(() => {
+            .then((sentMessage) => {
+                // Сохраняем связь message_id -> userId
+                messageMap.set(sentMessage.message_id, userId);
+                console.log(`💾 Сохранена связь: сообщение ${sentMessage.message_id} -> клиент ${userId}`);
+                console.log(`📋 Всего сохранено связей: ${messageMap.size}`);
+                console.log(`📋 Все связи:`, Array.from(messageMap.entries()));
+                
                 // Подтверждение клиенту
                 bot.sendMessage(chatId, 
                     '✅ Ваше сообщение отправлено менеджерам!\n\n' +
@@ -157,9 +234,13 @@ bot.on('message', (msg) => {
         bot.sendPhoto(GROUP_ID, photoId, {
             caption: `📷 Фото от ${userName} (${username})\n` +
                      `ID: ${userId}\n\n` +
-                     (caption ? `Подпись: ${caption}` : '')
+                     (caption ? `Подпись: ${caption}` : '') +
+                     `\n━━━━━━━━━━━━━━━━━━━━\n` +
+                     `💬 Ответьте на это сообщение, чтобы ответить клиенту`
         })
-        .then(() => {
+        .then((sentMessage) => {
+            // Сохраняем связь для фото
+            messageMap.set(sentMessage.message_id, userId);
             bot.sendMessage(chatId, '✅ Фото отправлено менеджерам!');
         })
         .catch((err) => {
@@ -179,7 +260,7 @@ bot.on('message', (msg) => {
     }
 });
 
-// Команда для менеджеров: /send_USERID текст ответа
+// Команда для менеджеров: /send_USERID текст ответа (альтернативный способ, если reply не работает)
 bot.onText(/\/send_(\d+)\s+(.+)/, (msg, match) => {
     const targetUserId = match[1];
     const replyText = match[2];
