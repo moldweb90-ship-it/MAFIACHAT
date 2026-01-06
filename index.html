@@ -96,6 +96,12 @@
                 margin-right: 16px !important;
                 margin-bottom: 16px !important;
             }
+            
+            #welcome-bubble {
+                bottom: 70px !important;
+                right: 16px !important;
+                max-width: calc(100vw - 32px) !important;
+            }
         }
     </style>
 </head>
@@ -845,7 +851,12 @@
         function scrollToBottom() { els.area.scrollTop = els.area.scrollHeight; }
         function loadHistory() { const saved = localStorage.getItem('chat_history'); if (saved) messages = JSON.parse(saved); }
         function openTelegramLink() { window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank'); }
-        function closeWelcome(e) { if(e) e.stopPropagation(); els.welcome.classList.add('hidden'); sessionStorage.setItem('bubble_closed', 'true'); }
+        function closeWelcome(e) { 
+            if(e) e.stopPropagation(); 
+            els.welcome.classList.add('hidden'); 
+            sessionStorage.setItem('bubble_closed', 'true'); 
+            console.log('Welcome bubble закрыт');
+        }
         function incrementBadge() { unreadCount++; els.badgeCount.innerText = unreadCount; els.badge.classList.remove('hidden'); }
         function resetBadge() { unreadCount = 0; els.badge.classList.add('hidden'); }
 
