@@ -1,13 +1,10 @@
 {
   "version": 2,
+  "public": true,
   "rewrites": [
     {
       "source": "/api/bot",
       "destination": "/api/bot.js"
-    },
-    {
-      "source": "/(.*\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|eot))",
-      "destination": "/$1"
     },
     {
       "source": "/(.*)",
