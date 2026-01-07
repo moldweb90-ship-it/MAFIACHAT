@@ -14,6 +14,10 @@
       "destination": "/api/keepalive.js"
     },
     {
+      "source": "/widget.js",
+      "destination": "/widget.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
