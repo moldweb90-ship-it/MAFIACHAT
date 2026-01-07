@@ -10,11 +10,21 @@
       "destination": "/api/image.js"
     },
     {
+      "source": "/api/keepalive",
+      "destination": "/api/keepalive.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
   "cleanUrls": false,
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
