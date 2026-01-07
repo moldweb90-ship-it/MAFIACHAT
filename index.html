@@ -485,8 +485,15 @@
             loadHistory();
             setGreeting();
 
-            // В режиме виджета (iframe) сразу открываем чат без welcome bubble и скрываем кнопку
+            // В режиме виджета (iframe) убираем подложку и сразу открываем чат
             if (isWidgetMode) {
+                // Убираем подложку body
+                document.body.style.background = 'transparent';
+                document.body.style.margin = '0';
+                document.body.style.padding = '0';
+                document.body.style.overflow = 'hidden';
+                document.body.classList.remove('bg-gray-50', 'h-screen');
+                
                 els.welcome.classList.add('hidden');
                 els.window.classList.remove('hidden');
                 if (els.trigger) els.trigger.style.display = 'none'; // Скрываем кнопку внутри iframe
