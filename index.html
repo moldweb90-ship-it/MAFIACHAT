@@ -518,7 +518,6 @@
                 }
                 
                 // В режиме виджета НЕ открываем чат сразу, оставляем кнопку видимой
-                els.welcome.classList.add('hidden');
                 els.window.classList.add('hidden'); // Чат закрыт по умолчанию
                 // Кнопка остается видимой - НЕ скрываем её!
                 els.iconClosed.classList.remove('hidden');
@@ -528,6 +527,17 @@
                 // Сразу показываем чат без intro screen (но он скрыт)
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
+                
+                // Показываем welcome bubble в режиме виджета
+                if (!sessionStorage.getItem('bubble_closed')) {
+                    setTimeout(() => { 
+                        if (!isOpen) { 
+                            els.welcome.classList.remove('hidden'); 
+                            els.welcome.classList.add('pop-in'); 
+                            playSound('in'); 
+                        } 
+                    }, BUBBLE_DELAY);
+                }
             } else {
                 // Обычный режим - показываем welcome bubble
                 if (!sessionStorage.getItem('bubble_closed')) {
