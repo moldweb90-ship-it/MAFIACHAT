@@ -38,14 +38,14 @@ module.exports = (req, res) => {
         // Создаем контейнер для виджета
         const widgetContainer = document.createElement('div');
         widgetContainer.id = 'mafia-chat-widget-wrapper';
-        widgetContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 99999; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
+        widgetContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 999999 !important; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
         document.body.appendChild(widgetContainer);
         
         // Загружаем виджет через iframe
         const iframe = document.createElement('iframe');
         iframe.id = 'mafia-chat-iframe';
         iframe.src = WIDGET_URL + '?widget=true';
-        iframe.style.cssText = 'border: none; background: transparent; position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; pointer-events: auto !important;';
+        iframe.style.cssText = 'border: none; background: transparent; position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; pointer-events: auto !important; z-index: 999999 !important;';
         iframe.allow = 'microphone';
         iframe.scrolling = 'no';
         iframe.frameBorder = '0';
@@ -95,6 +95,8 @@ module.exports = (req, res) => {
                         iframe.style.height = '700px';
                         widgetContainer.style.width = '400px';
                         widgetContainer.style.height = '700px';
+                        widgetContainer.style.zIndex = '999999 !important';
+                        iframe.style.zIndex = '999999 !important';
                         lastSize = 'large';
                     } else if (!isOpen && lastSize !== 'small') {
                         iframe.style.width = '80px';
