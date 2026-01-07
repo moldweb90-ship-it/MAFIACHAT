@@ -9,10 +9,8 @@
 
 3. СКОПИРУЙТЕ ВЕСЬ КОД ИЗ ФАЙЛА joomla-widget-loader.js
 
-4. ВАЖНО: Замените в коде строку:
-   const WIDGET_URL = 'https://ваш-проект.vercel.app';
-   на ваш реальный URL Vercel, например:
-   const WIDGET_URL = 'https://mafiachat.vercel.app';
+4. URL уже настроен в скрипте:
+   const WIDGET_URL = 'https://mafiachat-sx8l.vercel.app';
 
 5. ВСТАВЬТЕ КОД В ПОЛЕ "After <head>"
 
