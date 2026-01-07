@@ -38,7 +38,7 @@ module.exports = (req, res) => {
         // Создаем контейнер для виджета
         const widgetContainer = document.createElement('div');
         widgetContainer.id = 'mafia-chat-widget-wrapper';
-        widgetContainer.style.cssText = 'position: fixed; bottom: 0; right: 0; z-index: 99999; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
+        widgetContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 99999; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
         document.body.appendChild(widgetContainer);
         
         // Загружаем виджет через iframe
