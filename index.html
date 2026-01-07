@@ -494,6 +494,17 @@
                 document.body.style.overflow = 'hidden';
                 document.body.classList.remove('bg-gray-50', 'h-screen');
                 
+                // Убираем тени и подложки из контейнера
+                if (document.getElementById('telegram-widget-container')) {
+                    document.getElementById('telegram-widget-container').style.background = 'transparent';
+                }
+                
+                // Убираем тени из чата
+                if (els.window) {
+                    els.window.style.boxShadow = 'none';
+                    els.window.style.background = 'white';
+                }
+                
                 els.welcome.classList.add('hidden');
                 els.window.classList.remove('hidden');
                 if (els.trigger) els.trigger.style.display = 'none'; // Скрываем кнопку внутри iframe
