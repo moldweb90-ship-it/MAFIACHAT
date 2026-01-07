@@ -75,44 +75,48 @@ module.exports = (req, res) => {
             }
             
             if (event.data && event.data.type === 'chat-toggle') {
-                const isOpen = event.data.isOpen;
-                
-                if (isOpen) {
-                    // Чат открыт - расширяем контейнер
-                    widgetContainer.style.width = '400px';
-                    widgetContainer.style.height = '700px';
-                    iframe.style.width = '400px';
-                    iframe.style.height = '700px';
-                } else {
-                    // Чат закрыт - минимальный размер только для кнопки
-                    widgetContainer.style.width = '80px';
-                    widgetContainer.style.height = '80px';
-                    iframe.style.width = '80px';
-                    iframe.style.height = '80px';
-                    // Убеждаемся что pointer-events работает только на iframe
-                    widgetContainer.style.pointerEvents = 'none';
-                    iframe.style.pointerEvents = 'auto !important';
-                }
+                updateContainerSize(event.data.isOpen);
             }
         });
         
-        // Проверяем начальное состояние чата (закрыт)
-        // Устанавливаем минимальный размер сразу
-        setTimeout(function() {
+        // Функция обновления размера контейнера
+        function updateContainerSize(isOpen) {
+            if (isOpen) {
+                widgetContainer.style.width = '400px';
+                widgetContainer.style.height = '700px';
+                iframe.style.width = '400px';
+                iframe.style.height = '700px';
+            } else {
+                // Чат закрыт - минимальный размер только для кнопки
+                widgetContainer.style.width = '80px';
+                widgetContainer.style.height = '80px';
+                iframe.style.width = '80px';
+                iframe.style.height = '80px';
+            }
+        }
+        
+        // Периодически проверяем состояние чата и принудительно обновляем размер
+        setInterval(function() {
             try {
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 const chatWindow = iframeDoc.getElementById('chat-window');
-                if (chatWindow && chatWindow.classList.contains('hidden')) {
-                    // Чат закрыт - устанавливаем минимальный размер
-                    widgetContainer.style.width = '80px';
-                    widgetContainer.style.height = '80px';
-                    iframe.style.width = '80px';
-                    iframe.style.height = '80px';
+                if (chatWindow) {
+                    const isOpen = !chatWindow.classList.contains('hidden');
+                    const currentWidth = parseInt(widgetContainer.style.width) || 80;
+                    
+                    // Если чат закрыт, но размер большой - принудительно исправляем
+                    if (!isOpen && currentWidth > 100) {
+                        updateContainerSize(false);
+                    }
+                    // Если чат открыт, но размер маленький - принудительно исправляем
+                    if (isOpen && currentWidth < 300) {
+                        updateContainerSize(true);
+                    }
                 }
             } catch (e) {
-                // CORS блокирует - это нормально, размер уже установлен правильно
+                // CORS блокирует - это нормально, используем postMessage
             }
-        }, 1000);
+        }, 300);
         
         iframe.onerror = function() {
             console.error('[MAFIA CHAT] Ошибка загрузки iframe');
