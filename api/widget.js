@@ -46,11 +46,23 @@ module.exports = (req, res) => {
         
         console.log('[MAFIA CHAT] Создаем контейнер');
         // Создаем контейнер для виджета
+        const isMobile = window.innerWidth <= 768;
+        const bottomOffset = isMobile ? '10px' : '16px';
+        const rightOffset = isMobile ? '10px' : '16px';
         const widgetContainer = document.createElement('div');
         widgetContainer.id = 'mafia-chat-widget-wrapper';
-        widgetContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 999999 !important; pointer-events: none; width: 400px; height: 700px; overflow: visible;';
+        widgetContainer.style.cssText = 'position: fixed; bottom: ' + bottomOffset + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: none; width: 400px; height: 700px; overflow: visible;';
         document.body.appendChild(widgetContainer);
         console.log('[MAFIA CHAT] Контейнер создан и добавлен в DOM');
+        
+        // Обновляем отступы при изменении размера окна
+        window.addEventListener('resize', function() {
+            const isMobileNow = window.innerWidth <= 768;
+            const newBottom = isMobileNow ? '10px' : '16px';
+            const newRight = isMobileNow ? '10px' : '16px';
+            widgetContainer.style.bottom = newBottom;
+            widgetContainer.style.right = newRight;
+        });
         
         console.log('[MAFIA CHAT] Создаем iframe');
         // Загружаем виджет через iframe
