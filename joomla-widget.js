@@ -27,13 +27,12 @@
         // Создаем кнопку с таким же дизайном как widget-trigger
         button = document.createElement('button');
         button.id = 'widget-trigger';
-        button.className = 'pointer-events-auto group w-14 h-14 md:w-16 md:h-16 bg-[#2AABEE] rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(42,171,238,0.4)] hover:shadow-[0_8px_24px_rgba(42,171,238,0.5)] hover:bg-[#229ED9] transition-all duration-300 transform hover:scale-105 z-50 fixed bottom-4 right-4';
-        button.style.cssText = 'position: fixed; bottom: 16px; right: 16px; width: 56px; height: 56px; z-index: 9999;';
+        button.style.cssText = 'position: fixed; bottom: 16px; right: 16px; width: 56px; height: 56px; background: #2AABEE; border: none; border-radius: 50%; color: white; cursor: pointer; z-index: 9999; box-shadow: 0 4px 14px rgba(42,171,238,0.4); display: flex; align-items: center; justify-content: center; transition: all 0.3s;';
         
         // Иконка закрыта (отправка)
         var iconClosed = document.createElement('svg');
         iconClosed.id = 'icon-closed';
-        iconClosed.className = 'w-6 h-6 md:w-8 md:h-8 text-white fill-current transition-transform duration-300 transform group-hover:-rotate-12 translate-x-[-1px] translate-y-[1px]';
+        iconClosed.style.cssText = 'width: 24px; height: 24px; fill: white;';
         iconClosed.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         iconClosed.setAttribute('viewBox', '0 0 24 24');
         iconClosed.innerHTML = '<path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"></path>';
@@ -41,11 +40,11 @@
         // Иконка открыта (крестик)
         var iconOpened = document.createElement('svg');
         iconOpened.id = 'icon-opened';
-        iconOpened.className = 'w-6 h-6 md:w-7 md:h-7 text-white hidden';
+        iconOpened.style.cssText = 'width: 24px; height: 24px; display: none;';
         iconOpened.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         iconOpened.setAttribute('viewBox', '0 0 24 24');
         iconOpened.setAttribute('fill', 'none');
-        iconOpened.setAttribute('stroke', 'currentColor');
+        iconOpened.setAttribute('stroke', 'white');
         iconOpened.setAttribute('stroke-width', '2');
         iconOpened.setAttribute('stroke-linecap', 'round');
         iconOpened.setAttribute('stroke-linejoin', 'round');
@@ -53,6 +52,15 @@
         
         button.appendChild(iconClosed);
         button.appendChild(iconOpened);
+        
+        button.onmouseover = function() {
+            this.style.transform = 'scale(1.1)';
+            this.style.boxShadow = '0 8px 24px rgba(42,171,238,0.5)';
+        };
+        button.onmouseout = function() {
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = '0 4px 14px rgba(42,171,238,0.4)';
+        };
         
         button.onclick = function(e) {
             e.stopPropagation();
@@ -93,15 +101,15 @@
             // Меняем иконку на крестик
             var iconClosed = button.querySelector('#icon-closed');
             var iconOpened = button.querySelector('#icon-opened');
-            if (iconClosed) iconClosed.classList.add('hidden');
-            if (iconOpened) iconOpened.classList.remove('hidden');
+            if (iconClosed) iconClosed.style.display = 'none';
+            if (iconOpened) iconOpened.style.display = 'block';
         } else {
             container.style.display = 'none';
             // Возвращаем иконку отправки
             var iconClosed = button.querySelector('#icon-closed');
             var iconOpened = button.querySelector('#icon-opened');
-            if (iconClosed) iconClosed.classList.remove('hidden');
-            if (iconOpened) iconOpened.classList.add('hidden');
+            if (iconClosed) iconClosed.style.display = 'block';
+            if (iconOpened) iconOpened.style.display = 'none';
         }
     }
     
