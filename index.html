@@ -288,7 +288,7 @@
         /* --- CONFIGURATION --- */
         const TELEGRAM_USERNAME = 'FlowersMafia_help_bot'; 
         const WELCOME_DELAY = 10000; 
-        const BUBBLE_DELAY = 3000; 
+        const BUBBLE_DELAY = 20000; // 20 секунд общего времени на сайте 
 
         /* --- STATE --- */
         let isOpen = false;
@@ -528,35 +528,16 @@
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 
-                // Показываем welcome bubble в режиме виджета
-                if (!sessionStorage.getItem('bubble_closed')) {
-                    setTimeout(() => { 
-                        if (!isOpen) { 
-                            els.welcome.classList.remove('hidden'); 
-                            els.welcome.classList.add('pop-in'); 
-                            playSound('in'); 
-                        } 
-                    }, BUBBLE_DELAY);
-                }
+                // Welcome bubble показывается через initTimeTracking после 20 секунд
             } else {
-                // Обычный режим - показываем welcome bubble
-                if (!sessionStorage.getItem('bubble_closed')) {
+                // Welcome bubble показывается через initTimeTracking после 20 секунд
+                // Автооткрытие чата только если нет сообщений
+                if (messages.length === 0) {
                     setTimeout(() => { 
-                        if (!isOpen) { 
-                            els.welcome.classList.remove('hidden'); 
-                            els.welcome.classList.add('pop-in'); 
-                            playSound('in'); 
+                        if (!isOpen && !hasOpenedOnce) { 
+                            toggleChat(true); 
                         } 
-                    }, BUBBLE_DELAY);
-                    
-                    // Автооткрытие чата только если нет сообщений
-                    if (messages.length === 0) {
-                        setTimeout(() => { 
-                            if (!isOpen && !hasOpenedOnce) { 
-                                toggleChat(true); 
-                            } 
-                        }, WELCOME_DELAY);
-                    }
+                    }, WELCOME_DELAY);
                 }
             }
             
