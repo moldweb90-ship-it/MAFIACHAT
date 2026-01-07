@@ -19,12 +19,6 @@
     }
   ],
   "cleanUrls": false,
-  "crons": [
-    {
-      "path": "/api/keepalive",
-      "schedule": "*/5 * * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
