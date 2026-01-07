@@ -140,6 +140,15 @@ module.exports = (req, res) => {
                     body[data-widget-mode="true"] { 
                         background: transparent !important; 
                     }
+                    #telegram-widget-container {
+                        z-index: 999999 !important;
+                    }
+                    #chat-window {
+                        z-index: 999999 !important;
+                    }
+                    #widget-trigger {
+                        z-index: 999999 !important;
+                    }
                 \`;
                 iframeDoc.head.appendChild(style);
                 
