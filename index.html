@@ -1721,7 +1721,8 @@
         function closeWelcome(e) { 
             if(e) e.stopPropagation(); 
             els.welcome.classList.add('hidden'); 
-            sessionStorage.setItem('bubble_closed', 'true'); 
+            sessionStorage.setItem('bubble_closed', 'true');
+            sessionStorage.setItem('bubble_shown', 'true'); // Помечаем что показывали
             console.log('Welcome bubble закрыт');
         }
         function incrementBadge() { unreadCount++; els.badgeCount.innerText = unreadCount; els.badge.classList.remove('hidden'); }
