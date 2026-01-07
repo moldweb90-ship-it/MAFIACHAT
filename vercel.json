@@ -14,10 +14,6 @@
       "destination": "/api/keepalive.js"
     },
     {
-      "source": "/joomla-widget.js",
-      "destination": "/api/widget.js"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
