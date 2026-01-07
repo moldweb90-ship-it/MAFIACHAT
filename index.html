@@ -291,7 +291,7 @@
         /* --- CONFIGURATION --- */
         const TELEGRAM_USERNAME = 'FlowersMafia_help_bot'; 
         const WELCOME_DELAY = 10000; 
-        const BUBBLE_DELAY = 20000; // 20 секунд общего времени на сайте 
+        const BUBBLE_DELAY = 10000; // 10 секунд общего времени на сайте 
 
         /* --- STATE --- */
         let isOpen = false;
@@ -531,9 +531,9 @@
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 
-                // Welcome bubble показывается через initTimeTracking после 20 секунд
+                // Welcome bubble показывается через initTimeTracking после 10 секунд
             } else {
-                // Welcome bubble показывается через initTimeTracking после 20 секунд
+                // Welcome bubble показывается через initTimeTracking после 10 секунд
                 // Автооткрытие чата только если нет сообщений
                 if (messages.length === 0) {
                     setTimeout(() => { 

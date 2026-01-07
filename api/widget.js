@@ -35,13 +35,14 @@ module.exports = (req, res) => {
             return;
         }
         
-        // Создаем контейнер для виджета
+        // Создаем контейнер для виджета (минимальный размер для кнопки)
         const isMobile = window.innerWidth <= 768;
         const bottomOffset = isMobile ? '5px' : '16px';
         const rightOffset = isMobile ? '5px' : '16px';
         const widgetContainer = document.createElement('div');
         widgetContainer.id = 'mafia-chat-widget-wrapper';
-        widgetContainer.style.cssText = 'position: fixed; bottom: ' + bottomOffset + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: none; width: 400px; height: 700px; overflow: visible;';
+        // Начальный размер только для кнопки (80x80px), чтобы не блокировать клики на сайте
+        widgetContainer.style.cssText = 'position: fixed; bottom: ' + bottomOffset + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
         document.body.appendChild(widgetContainer);
         
         // Обновляем отступы при изменении размера окна
@@ -53,11 +54,12 @@ module.exports = (req, res) => {
             widgetContainer.style.right = newRight;
         });
         
-        // Загружаем виджет через iframe
+        // Загружаем виджет через iframe (начальный размер только для кнопки)
         const iframe = document.createElement('iframe');
         iframe.id = 'mafia-chat-iframe';
         iframe.src = WIDGET_URL + '?widget=true';
-        iframe.style.cssText = 'border: none; background: transparent; position: absolute; bottom: 0; right: 0; width: 400px; height: 700px; pointer-events: auto !important; z-index: 999999 !important;';
+        // Начальный размер только для кнопки, чтобы не блокировать клики на сайте
+        iframe.style.cssText = 'border: none; background: transparent; position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; pointer-events: auto !important; z-index: 999999 !important;';
         iframe.allow = 'microphone';
         iframe.scrolling = 'no';
         iframe.frameBorder = '0';
