@@ -594,24 +594,16 @@
                 els.welcome.classList.add('hidden');
                 resetBadge();
                 
-                // В режиме виджета (iframe) всегда показываем чат без intro screen
-                if (isWidgetMode) {
+                // Show Intro Screen if no name and no messages (работает и в режиме виджета)
+                if (!userName && messages.length === 0) {
+                    els.intro.classList.remove('hidden');
+                    els.chatUI.classList.add('hidden');
+                    setTimeout(() => els.usernameInput.focus(), 300);
+                } else {
                     els.intro.classList.add('hidden');
                     els.chatUI.classList.remove('hidden');
                     setTimeout(() => els.input.focus(), 300);
                     scrollToBottom();
-                } else {
-                    // Show Intro Screen if no name and no messages
-                    if (!userName && messages.length === 0) {
-                        els.intro.classList.remove('hidden');
-                        els.chatUI.classList.add('hidden');
-                        setTimeout(() => els.usernameInput.focus(), 300);
-                    } else {
-                        els.intro.classList.add('hidden');
-                        els.chatUI.classList.remove('hidden');
-                        setTimeout(() => els.input.focus(), 300);
-                        scrollToBottom();
-                    }
                 }
 
             } else {
