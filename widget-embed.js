@@ -27,7 +27,7 @@
             <div id="telegram-widget-iframe-wrapper" style="position: fixed; bottom: 20px; right: 20px; width: 380px; height: 620px; max-width: calc(100vw - 40px); max-height: calc(100vh - 40px); z-index: 9999; pointer-events: none;">
                 <iframe 
                     id="telegram-chat-iframe" 
-                    src="https://chatmafia.vercel.app/" 
+                    src="https://mafiachat-sx8l.vercel.app/" 
                     style="width: 100%; height: 100%; border: none; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); pointer-events: none;"
                     allow="microphone"
                     scrolling="no"

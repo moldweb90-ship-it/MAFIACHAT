@@ -65,7 +65,7 @@
         
         iframe = document.createElement('iframe');
         iframe.id = 'telegram-chat-iframe';
-        iframe.src = 'https://chatmafia.vercel.app/';
+        iframe.src = 'https://mafiachat-sx8l.vercel.app/';
         iframe.style.cssText = 'width: 100%; height: 100%; border: none; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);';
         iframe.allow = 'microphone';
         iframe.scrolling = 'no';
@@ -119,7 +119,7 @@
 Вставьте в `<head>` шаблона Joomla:
 
 ```html
-<script src="https://chatmafia.vercel.app/joomla-widget.js" async></script>
+<script src="https://mafiachat-sx8l.vercel.app/joomla-widget.js" async></script>
 ```
 
 Или с GitHub (альтернатива):
