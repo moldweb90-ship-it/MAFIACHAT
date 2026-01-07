@@ -114,13 +114,18 @@
 4. Установите позицию модуля: **"В конце страницы"** или **"Before </body>"**
 5. Сохраните и опубликуйте модуль
 
-## Способ 3: Подключение внешнего файла
+## Способ 3: Подключение с Vercel (Рекомендуется)
 
-1. Загрузите файл `joomla-widget.js` на ваш сервер
-2. В шаблоне в секции `<head>` добавьте:
+Вставьте в `<head>` шаблона Joomla:
 
 ```html
-<script src="/путь/к/joomla-widget.js" async></script>
+<script src="https://chatmafia.vercel.app/joomla-widget.js" async></script>
+```
+
+Или с GitHub (альтернатива):
+
+```html
+<script src="https://raw.githubusercontent.com/moldweb90-ship-it/MAFIACHAT/main/joomla-widget.js" async></script>
 ```
 
 ## Важные моменты:
