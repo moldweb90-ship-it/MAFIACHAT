@@ -76,6 +76,17 @@
             margin-left: -0.15rem !important;
         }
 
+        /* Widget mode - remove all shadows */
+        body[data-widget-mode="true"] *,
+        body[data-widget-mode="true"] #chat-window,
+        body[data-widget-mode="true"] #chat-window * {
+            box-shadow: none !important;
+        }
+        
+        body[data-widget-mode="true"] {
+            background: transparent !important;
+        }
+
         /* Mobile optimizations */
         @media (max-width: 768px) {
             #chat-window {
@@ -487,22 +498,23 @@
 
             // В режиме виджета (iframe) убираем подложку и сразу открываем чат
             if (isWidgetMode) {
+                // Устанавливаем атрибут для CSS
+                document.body.setAttribute('data-widget-mode', 'true');
+                
                 // Убираем подложку body
-                document.body.style.background = 'transparent';
-                document.body.style.margin = '0';
-                document.body.style.padding = '0';
-                document.body.style.overflow = 'hidden';
+                document.body.style.cssText = 'background: transparent !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important;';
                 document.body.classList.remove('bg-gray-50', 'h-screen');
                 
                 // Убираем тени и подложки из контейнера
-                if (document.getElementById('telegram-widget-container')) {
-                    document.getElementById('telegram-widget-container').style.background = 'transparent';
+                var container = document.getElementById('telegram-widget-container');
+                if (container) {
+                    container.style.cssText = 'background: transparent !important;';
                 }
                 
                 // Убираем тени из чата
                 if (els.window) {
-                    els.window.style.boxShadow = 'none';
-                    els.window.style.background = 'white';
+                    els.window.style.cssText += 'box-shadow: none !important; background: white !important;';
+                    els.window.classList.remove('shadow-2xl');
                 }
                 
                 els.welcome.classList.add('hidden');
