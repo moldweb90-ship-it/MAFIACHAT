@@ -73,3 +73,4 @@ https://api.telegram.org/bot8266109869:AAGrCaaptlP-zVLDhULXT2btDCJEJE7PR1c/getWe
 3. Проверьте, что BOT_TOKEN правильный в Vercel
 4. Убедитесь, что локальный бот ОСТАНОВЛЕН
 
+
