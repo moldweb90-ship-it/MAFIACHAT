@@ -286,7 +286,8 @@
         let hasOpenedOnce = false;
         // Проверяем, открыт ли чат из виджета (iframe)
         const isWidgetMode = new URLSearchParams(window.location.search).get('widget') === 'true';
-        let userName = isWidgetMode ? (localStorage.getItem('chat_username') || 'Гость') : (localStorage.getItem('chat_username') || '');
+        // В режиме виджета всегда используем "Гость" и не показываем intro
+        let userName = isWidgetMode ? 'Гость' : (localStorage.getItem('chat_username') || '');
         let lastBotResponse = ""; // To prevent loops
         let contextMemory = ""; // To remember dates/details
 
@@ -551,14 +552,10 @@
                 els.welcome.classList.add('hidden');
                 resetBadge();
                 
-                // В режиме виджета (iframe) сразу показываем чат без intro screen
+                // В режиме виджета (iframe) всегда показываем чат без intro screen
                 if (isWidgetMode) {
                     els.intro.classList.add('hidden');
                     els.chatUI.classList.remove('hidden');
-                    if (messages.length === 0) {
-                        const greeting = getGreetingText();
-                        saveMessage(`${greeting}, ${userName}! 👋<br>Я Анна, ваш персональный флорист. Подскажу по ценам, доставке и помогу удивить! Чем могу быть полезна?`, 'in');
-                    }
                     setTimeout(() => els.input.focus(), 300);
                     scrollToBottom();
                 } else {
