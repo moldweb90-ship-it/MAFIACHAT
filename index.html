@@ -297,8 +297,8 @@
         let hasOpenedOnce = false;
         // Проверяем, открыт ли чат из виджета (iframe)
         const isWidgetMode = new URLSearchParams(window.location.search).get('widget') === 'true';
-        // В режиме виджета всегда используем "Гость" и не показываем intro
-        let userName = isWidgetMode ? 'Гость' : (localStorage.getItem('chat_username') || '');
+        // Проверяем имя из localStorage (работает и в режиме виджета)
+        let userName = localStorage.getItem('chat_username') || '';
         let lastBotResponse = ""; // To prevent loops
         let contextMemory = ""; // To remember dates/details
 
