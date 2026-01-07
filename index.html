@@ -564,6 +564,18 @@
             isOpen = !isOpen;
             hasOpenedOnce = true;
             vibrate();
+            
+            // Отправляем сообщение родительскому окну (если мы в iframe)
+            if (isWidgetMode && window.parent !== window) {
+                try {
+                    window.parent.postMessage({
+                        type: 'chat-toggle',
+                        isOpen: isOpen
+                    }, '*');
+                } catch (e) {
+                    console.log('Не удалось отправить сообщение родителю:', e);
+                }
+            }
 
             if (isOpen) {
                 els.window.classList.remove('hidden');
