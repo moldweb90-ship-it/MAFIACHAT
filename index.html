@@ -531,9 +531,30 @@
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 
-                // Welcome bubble показывается через initTimeTracking после 10 секунд
+                // Показываем welcome bubble через 10 секунд
+                if (!sessionStorage.getItem('bubble_closed') && !sessionStorage.getItem('bubble_shown')) {
+                    setTimeout(() => { 
+                        if (!isOpen && els.welcome) { 
+                            els.welcome.classList.remove('hidden'); 
+                            els.welcome.classList.add('pop-in'); 
+                            playSound('in');
+                            sessionStorage.setItem('bubble_shown', 'true');
+                        } 
+                    }, BUBBLE_DELAY);
+                }
             } else {
-                // Welcome bubble показывается через initTimeTracking после 10 секунд
+                // Показываем welcome bubble через 10 секунд
+                if (!sessionStorage.getItem('bubble_closed') && !sessionStorage.getItem('bubble_shown')) {
+                    setTimeout(() => { 
+                        if (!isOpen && els.welcome) { 
+                            els.welcome.classList.remove('hidden'); 
+                            els.welcome.classList.add('pop-in'); 
+                            playSound('in');
+                            sessionStorage.setItem('bubble_shown', 'true');
+                        } 
+                    }, BUBBLE_DELAY);
+                }
+                
                 // Автооткрытие чата только если нет сообщений
                 if (messages.length === 0) {
                     setTimeout(() => { 
