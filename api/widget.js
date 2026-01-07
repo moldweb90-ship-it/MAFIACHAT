@@ -82,37 +82,72 @@ module.exports = (req, res) => {
         
         // Обновляем размеры iframe при открытии/закрытии чата
         let lastSize = 'small';
-        function updateIframeSizeOnToggle() {
-            try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                const chatWindow = iframeDoc.getElementById('chat-window');
-                const isMobile = window.innerWidth <= 768;
-                
-                if (chatWindow && !isMobile) {
-                    const isOpen = !chatWindow.classList.contains('hidden');
-                    if (isOpen && lastSize !== 'large') {
-                        iframe.style.width = '400px';
-                        iframe.style.height = '700px';
-                        widgetContainer.style.width = '400px';
-                        widgetContainer.style.height = '700px';
-                        widgetContainer.style.zIndex = '999999 !important';
-                        iframe.style.zIndex = '999999 !important';
-                        lastSize = 'large';
-                    } else if (!isOpen && lastSize !== 'small') {
-                        iframe.style.width = '80px';
-                        iframe.style.height = '80px';
-                        widgetContainer.style.width = '80px';
-                        widgetContainer.style.height = '80px';
-                        lastSize = 'small';
-                    }
+        function updateIframeSize(isOpen) {
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                iframe.style.width = '100vw';
+                iframe.style.height = '100vh';
+                widgetContainer.style.width = '100vw';
+                widgetContainer.style.height = '100vh';
+            } else {
+                if (isOpen) {
+                    iframe.style.width = '400px';
+                    iframe.style.height = '700px';
+                    widgetContainer.style.width = '400px';
+                    widgetContainer.style.height = '700px';
+                    lastSize = 'large';
+                } else {
+                    iframe.style.width = '80px';
+                    iframe.style.height = '80px';
+                    widgetContainer.style.width = '80px';
+                    widgetContainer.style.height = '80px';
+                    lastSize = 'small';
                 }
-            } catch (e) {
-                // CORS блокирует доступ - это нормально
             }
         }
         
-        // Отслеживаем изменения в iframe
-        setInterval(updateIframeSizeOnToggle, 300);
+        // Отслеживаем изменения в iframe через MutationObserver
+        function setupIframeObserver() {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const chatWindow = iframeDoc.getElementById('chat-window');
+                
+                if (chatWindow) {
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                                const isOpen = !chatWindow.classList.contains('hidden');
+                                updateIframeSize(isOpen);
+                            }
+                        });
+                    });
+                    
+                    observer.observe(chatWindow, {
+                        attributes: true,
+                        attributeFilter: ['class']
+                    });
+                    
+                    // Проверяем начальное состояние
+                    const isOpen = !chatWindow.classList.contains('hidden');
+                    updateIframeSize(isOpen);
+                }
+            } catch (e) {
+                // CORS блокирует доступ - используем fallback
+                setInterval(function() {
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const chatWindow = iframeDoc.getElementById('chat-window');
+                        if (chatWindow) {
+                            const isOpen = !chatWindow.classList.contains('hidden');
+                            if ((isOpen && lastSize !== 'large') || (!isOpen && lastSize !== 'small')) {
+                                updateIframeSize(isOpen);
+                            }
+                        }
+                    } catch (e) {}
+                }, 200);
+            }
+        }
         
         // Настраиваем прозрачный фон после загрузки
         iframe.onload = function() {
@@ -152,8 +187,24 @@ module.exports = (req, res) => {
                 \`;
                 iframeDoc.head.appendChild(style);
                 
+                // Настраиваем observer после загрузки
+                setTimeout(setupIframeObserver, 500);
+                
             } catch (e) {
                 console.log('Виджет чата загружен');
+                // Fallback - используем интервал
+                setInterval(function() {
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const chatWindow = iframeDoc.getElementById('chat-window');
+                        if (chatWindow) {
+                            const isOpen = !chatWindow.classList.contains('hidden');
+                            if ((isOpen && lastSize !== 'large') || (!isOpen && lastSize !== 'small')) {
+                                updateIframeSize(isOpen);
+                            }
+                        }
+                    } catch (e) {}
+                }, 200);
             }
         };
         
