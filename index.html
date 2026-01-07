@@ -496,7 +496,7 @@
             loadHistory();
             setGreeting();
 
-            // В режиме виджета (iframe) убираем подложку и сразу открываем чат
+            // В режиме виджета (iframe) убираем подложку, но оставляем кнопку видимой
             if (isWidgetMode) {
                 // Устанавливаем атрибут для CSS
                 document.body.setAttribute('data-widget-mode', 'true');
@@ -517,28 +517,17 @@
                     els.window.classList.remove('shadow-2xl');
                 }
                 
+                // В режиме виджета НЕ открываем чат сразу, оставляем кнопку видимой
                 els.welcome.classList.add('hidden');
-                els.window.classList.remove('hidden');
-                if (els.trigger) els.trigger.style.display = 'none'; // Скрываем кнопку внутри iframe
-                els.iconClosed.classList.add('hidden');
-                els.iconOpened.classList.remove('hidden');
-                isOpen = true;
-                hasOpenedOnce = true;
+                els.window.classList.add('hidden'); // Чат закрыт по умолчанию
+                // Кнопка остается видимой - НЕ скрываем её!
+                els.iconClosed.classList.remove('hidden');
+                els.iconOpened.classList.add('hidden');
+                isOpen = false; // Чат закрыт
                 
-                // Сразу показываем чат без intro screen
+                // Сразу показываем чат без intro screen (но он скрыт)
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
-                
-                // Показываем приветствие если нет сообщений
-                if (messages.length === 0) {
-                    const greeting = getGreetingText();
-                    saveMessage(`${greeting}, ${userName}! 👋<br>Я Анна, ваш персональный флорист. Подскажу по ценам, доставке и помогу удивить! Чем могу быть полезна?`, 'in');
-                }
-                
-                setTimeout(() => {
-                    els.input.focus();
-                    scrollToBottom();
-                }, 300);
             } else {
                 // Обычный режим - показываем welcome bubble
                 if (!sessionStorage.getItem('bubble_closed')) {

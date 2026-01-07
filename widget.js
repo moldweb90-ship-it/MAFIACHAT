@@ -26,10 +26,11 @@
     iframe.frameBorder = '0';
     iframe.setAttribute('allowtransparency', 'true');
     
-    // Адаптивные размеры
+    // Адаптивные размеры - показываем только кнопку, чат открывается по клику
     function updateIframeSize() {
         const isMobile = window.innerWidth <= 768;
         if (isMobile) {
+            // На мобильных - iframe подстраивается под содержимое
             iframe.style.width = '100vw';
             iframe.style.height = '100vh';
             iframe.style.position = 'fixed';
@@ -38,20 +39,48 @@
             iframe.style.bottom = 'auto';
             iframe.style.right = 'auto';
         } else {
-            iframe.style.width = '400px';
-            iframe.style.height = '700px';
+            // На десктопе - минимальный размер для кнопки, расширяется при открытии чата
+            iframe.style.width = '80px';
+            iframe.style.height = '80px';
             iframe.style.position = 'absolute';
             iframe.style.top = 'auto';
             iframe.style.left = 'auto';
-            iframe.style.bottom = '0';
-            iframe.style.right = '0';
+            iframe.style.bottom = '20px';
+            iframe.style.right = '20px';
         }
+    }
+    
+    // Обновляем размеры iframe при открытии/закрытии чата
+    function updateIframeSizeOnToggle() {
+        setTimeout(() => {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const chatWindow = iframeDoc.getElementById('chat-window');
+                const isMobile = window.innerWidth <= 768;
+                
+                if (chatWindow && !isMobile) {
+                    const isOpen = !chatWindow.classList.contains('hidden');
+                    if (isOpen) {
+                        iframe.style.width = '400px';
+                        iframe.style.height = '700px';
+                    } else {
+                        iframe.style.width = '80px';
+                        iframe.style.height = '80px';
+                    }
+                }
+            } catch (e) {
+                // CORS блокирует доступ
+            }
+        }, 100);
     }
     
     updateIframeSize();
     window.addEventListener('resize', updateIframeSize);
     
     widgetContainer.appendChild(iframe);
+    
+    // Отслеживаем изменения в iframe для обновления размеров
+    setInterval(updateIframeSizeOnToggle, 500);
     
     // Настраиваем прозрачный фон после загрузки
     iframe.onload = function() {
