@@ -197,18 +197,51 @@ module.exports = async (req, res) => {
                         const originalMessageId = update.message.reply_to_message.message_id;
                         const originalText = update.message.reply_to_message.text || update.message.reply_to_message.caption || '';
                         
+                        console.log('Попытка редактирования сообщения:', {
+                            messageId: originalMessageId,
+                            textLength: originalText.length,
+                            containsNotAnswered: originalText.includes('НЕ ОТВЕЧЕНО') || originalText.includes('не отвечено')
+                        });
+                        
                         // Редактируем оригинальное сообщение, заменяя статус
-                        if (originalText.includes('🔴 <b>НЕ ОТВЕЧЕНО</b>')) {
-                            const newText = originalText.replace('🔴 <b>НЕ ОТВЕЧЕНО</b>', '✅ <b>ОТВЕЧЕНО</b>');
+                        // Проверяем наличие текста "НЕ ОТВЕЧЕНО" в любом формате (с HTML тегами или без)
+                        if (originalText.includes('НЕ ОТВЕЧЕНО') || originalText.includes('не отвечено')) {
+                            // Заменяем статус в любом формате
+                            let newText = originalText;
+                            // Заменяем все возможные варианты
+                            newText = newText.replace(/🔴\s*<b>НЕ ОТВЕЧЕНО<\/b>/gi, '✅ <b>ОТВЕЧЕНО</b>');
+                            newText = newText.replace(/🔴\s*НЕ ОТВЕЧЕНО/gi, '✅ <b>ОТВЕЧЕНО</b>');
+                            newText = newText.replace(/НЕ ОТВЕЧЕНО/gi, 'ОТВЕЧЕНО');
+                            
+                            // Если не было HTML тегов, добавляем их
+                            if (!newText.includes('<b>ОТВЕЧЕНО</b>')) {
+                                newText = newText.replace('ОТВЕЧЕНО', '<b>ОТВЕЧЕНО</b>');
+                                // Добавляем эмодзи если его не было
+                                if (!newText.includes('✅')) {
+                                    newText = newText.replace('<b>ОТВЕЧЕНО</b>', '✅ <b>ОТВЕЧЕНО</b>');
+                                }
+                            }
+                            
+                            console.log('Редактирование сообщения:', {
+                                messageId: originalMessageId,
+                                oldText: originalText.substring(0, 100),
+                                newText: newText.substring(0, 100)
+                            });
+                            
                             await bot.editMessageText(newText, {
                                 chat_id: GROUP_ID,
                                 message_id: originalMessageId,
                                 parse_mode: 'HTML'
                             });
+                            
+                            console.log('Сообщение успешно отредактировано');
+                        } else {
+                            console.log('Сообщение не содержит "НЕ ОТВЕЧЕНО", пропускаем редактирование');
                         }
                     } catch (editErr) {
                         // Если не удалось отредактировать - не критично
-                        console.log('Не удалось отредактировать сообщение:', editErr.message);
+                        console.error('Ошибка редактирования сообщения:', editErr.message);
+                        console.error('Детали ошибки:', editErr);
                     }
                     
                     // Убрано сообщение об успешной отправке - оно отвлекает админов
