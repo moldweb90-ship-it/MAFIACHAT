@@ -511,6 +511,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadHistory();
             setGreeting();
+            
+            // Слушаем сообщения от родительского окна (для открытия чата из баббла)
+            if (isWidgetMode && window.parent) {
+                window.addEventListener('message', function(event) {
+                    if (event.data && event.data.type === 'open-chat') {
+                        if (!isOpen) {
+                            toggleChat();
+                        }
+                    }
+                });
+            }
 
             // В режиме виджета (iframe) убираем подложку, но оставляем кнопку видимой
             if (isWidgetMode) {
@@ -549,13 +560,17 @@
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 
+                // В режиме виджета баббл показывается в родительском окне
+                // Скрываем баббл внутри iframe
+                if (els.welcome) {
+                    els.welcome.style.display = 'none';
+                }
+                
                 // Показываем welcome bubble через 10 секунд (если чат закрыт)
                 setTimeout(() => {
-                    if (!isOpen && els.welcome) { 
+                    if (!isOpen) { 
                         // Проверяем, не был ли баббл закрыт в этой сессии
                         if (!sessionStorage.getItem('bubble_closed')) {
-                            els.welcome.classList.remove('hidden'); 
-                            els.welcome.classList.add('pop-in'); 
                             playSound('in');
                             sessionStorage.setItem('bubble_shown', 'true');
                             // Уведомляем родительское окно о показе баббла
@@ -568,14 +583,16 @@
             } else {
                 // Показываем welcome bubble через 10 секунд (если чат закрыт)
                 setTimeout(() => { 
-                    if (!isOpen && els.welcome) { 
+                    if (!isOpen) { 
                         // Проверяем, не был ли баббл закрыт в этой сессии
                         if (!sessionStorage.getItem('bubble_closed')) {
-                            els.welcome.classList.remove('hidden'); 
-                            els.welcome.classList.add('pop-in'); 
+                            if (els.welcome) {
+                                els.welcome.classList.remove('hidden'); 
+                                els.welcome.classList.add('pop-in'); 
+                            }
                             playSound('in'); 
                             sessionStorage.setItem('bubble_shown', 'true');
-                            // Уведомляем родительское окно о показе баббла
+                            // Уведомляем родительское окно о показе баббла (если режим виджета)
                             if (isWidgetMode && window.parent) {
                                 window.parent.postMessage({ type: 'bubble-visibility', isVisible: true }, '*');
                             }
@@ -624,7 +641,13 @@
                 els.window.classList.remove('hidden');
                 els.iconClosed.classList.add('hidden');
                 els.iconOpened.classList.remove('hidden');
-                els.welcome.classList.add('hidden');
+                if (els.welcome) {
+                    els.welcome.classList.add('hidden');
+                }
+                // Уведомляем родительское окно о скрытии баббла
+                if (isWidgetMode && window.parent) {
+                    window.parent.postMessage({ type: 'bubble-visibility', isVisible: false }, '*');
+                }
                 // Уведомляем родительское окно о скрытии баббла
                 if (isWidgetMode && window.parent) {
                     window.parent.postMessage({ type: 'bubble-visibility', isVisible: false }, '*');
@@ -1783,7 +1806,15 @@
         function openTelegramLink() { window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank'); }
         function closeWelcome(e) { 
             if(e) e.stopPropagation(); 
-            els.welcome.classList.add('hidden'); 
+            if (els.welcome) {
+                if (els.welcome) {
+                    els.welcome.classList.add('hidden');
+                }
+                // Уведомляем родительское окно о скрытии баббла
+                if (isWidgetMode && window.parent) {
+                    window.parent.postMessage({ type: 'bubble-visibility', isVisible: false }, '*');
+                } 
+            }
             sessionStorage.setItem('bubble_closed', 'true'); 
             sessionStorage.setItem('bubble_shown', 'true'); // Помечаем что показывали
             console.log('Welcome bubble закрыт');

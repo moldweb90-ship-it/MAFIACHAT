@@ -52,6 +52,9 @@ module.exports = (req, res) => {
             const newRight = isMobileNow ? '5px' : '16px';
             widgetContainer.style.bottom = newBottom;
             widgetContainer.style.right = newRight;
+            // Обновляем позицию баббла
+            welcomeBubble.style.bottom = isMobileNow ? '90px' : '100px';
+            welcomeBubble.style.right = newRight;
         });
         
         // Загружаем виджет через iframe
@@ -67,9 +70,42 @@ module.exports = (req, res) => {
         
         widgetContainer.appendChild(iframe);
         
+        // Создаем баббл В РОДИТЕЛЬСКОМ ОКНЕ (на сайте Joomla), а не внутри iframe
+        const welcomeBubble = document.createElement('div');
+        welcomeBubble.id = 'mafia-chat-welcome-bubble';
+        welcomeBubble.className = 'mafia-chat-welcome-bubble';
+        welcomeBubble.style.cssText = 'position: fixed; bottom: ' + (isMobile ? '90px' : '100px') + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: auto; background: white; padding: 12px 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-width: 280px; display: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; border: 1px solid #e5e7eb;';
+        
+        // Содержимое баббла
+        welcomeBubble.innerHTML = '<div style="display: flex; gap: 12px; align-items: center;"><div style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0;"><img src="https://raw.githubusercontent.com/moldweb90-ship-it/MAFIACHAT/main/public/Eiva.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EФото%3C/text%3E%3C/svg%3E\'"></div><div style="flex: 1;"><div style="font-weight: 600; margin-bottom: 4px; color: #111827;">Добрый вечер! 👋</div><div style="color: #6b7280; font-size: 13px;">Чем могу помочь?</div></div><button onclick="document.getElementById(\\'mafia-chat-welcome-bubble\\').style.display=\\'none\\'; if(window.mafiaChatToggle) window.mafiaChatToggle();" style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: white; border: 1px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #6b7280; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">✕</button></div>';
+        
+        document.body.appendChild(welcomeBubble);
+        
+        // Экспортируем функцию для открытия чата
+        window.mafiaChatToggle = function() {
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'open-chat' }, WIDGET_URL);
+            }
+        };
+        
+        // Клик по бабблу открывает чат
+        welcomeBubble.onclick = function(e) {
+            if (e.target.tagName !== 'BUTTON' && e.target.closest('button') === null) {
+                window.mafiaChatToggle();
+                welcomeBubble.style.display = 'none';
+            }
+        };
+        
+        // Клик по бабблу открывает чат
+        welcomeBubble.onclick = function(e) {
+            if (e.target.tagName !== 'BUTTON' && e.target.closest('button') === null) {
+                window.mafiaChatToggle();
+                welcomeBubble.style.display = 'none';
+            }
+        };
+        
         // Состояние чата и баббла
         let chatIsOpen = false;
-        let bubbleIsVisible = false;
         
         // Слушаем сообщения от iframe через postMessage
         window.addEventListener('message', function(event) {
@@ -84,37 +120,14 @@ module.exports = (req, res) => {
             
             // Обрабатываем события показа/скрытия баббла
             if (event.data && event.data.type === 'bubble-visibility') {
-                updateBubbleSize(event.data.isVisible);
+                if (event.data.isVisible) {
+                    welcomeBubble.style.display = 'block';
+                    welcomeBubble.style.animation = 'fadeInUp 0.3s ease-out';
+                } else {
+                    welcomeBubble.style.display = 'none';
+                }
             }
         });
-        
-        // Функция обновления размера для баббла
-        function updateBubbleSize(isVisible) {
-            bubbleIsVisible = isVisible;
-            if (isVisible) {
-                // Баббл виден - увеличиваем iframe чтобы он не обрезался
-                // Баббл находится на bottom: 80px от кнопки, нужна высота ~350px
-                // Ширина должна быть достаточной для баббла (~320px)
-                // Но только если чат закрыт (если чат открыт, размер уже большой)
-                if (!chatIsOpen) {
-                    widgetContainer.style.width = '350px';
-                    widgetContainer.style.height = '400px';
-                    iframe.style.width = '350px';
-                    iframe.style.height = '400px';
-                    // Убеждаемся что overflow visible для показа баббла
-                    widgetContainer.style.overflow = 'visible';
-                    iframe.style.overflow = 'visible';
-                }
-            } else {
-                // Баббл скрыт - уменьшаем до минимума (только если чат закрыт)
-                if (!chatIsOpen) {
-                    widgetContainer.style.width = '80px';
-                    widgetContainer.style.height = '80px';
-                    iframe.style.width = '80px';
-                    iframe.style.height = '80px';
-                }
-            }
-        }
         
         // Функция обновления размера контейнера
         function updateContainerSize(isChatOpen) {
@@ -124,25 +137,14 @@ module.exports = (req, res) => {
                 widgetContainer.style.height = '700px';
                 iframe.style.width = '400px';
                 iframe.style.height = '700px';
-                widgetContainer.style.overflow = 'visible';
-                iframe.style.overflow = 'visible';
+                // Скрываем баббл когда чат открыт
+                welcomeBubble.style.display = 'none';
             } else {
-                // Чат закрыт - проверяем состояние баббла
-                if (bubbleIsVisible) {
-                    // Баббл виден - оставляем размер для баббла
-                    widgetContainer.style.width = '350px';
-                    widgetContainer.style.height = '400px';
-                    iframe.style.width = '350px';
-                    iframe.style.height = '400px';
-                    widgetContainer.style.overflow = 'visible';
-                    iframe.style.overflow = 'visible';
-                } else {
-                    // Баббл скрыт - уменьшаем до минимума
-                    widgetContainer.style.width = '80px';
-                    widgetContainer.style.height = '80px';
-                    iframe.style.width = '80px';
-                    iframe.style.height = '80px';
-                }
+                // Чат закрыт - минимальный размер
+                widgetContainer.style.width = '80px';
+                widgetContainer.style.height = '80px';
+                iframe.style.width = '80px';
+                iframe.style.height = '80px';
             }
         }
         
@@ -172,6 +174,11 @@ module.exports = (req, res) => {
         iframe.onerror = function() {
             console.error('[MAFIA CHAT] Ошибка загрузки iframe');
         };
+        
+        // Добавляем CSS анимацию для баббла
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }';
+        document.head.appendChild(style);
     }
     
     // Запускаем инициализацию
