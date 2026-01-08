@@ -45,24 +45,40 @@ module.exports = (req, res) => {
             // Создаем контейнер для виджета
             const isMobile = window.innerWidth <= 768;
             const bottomOffset = isMobile ? '5px' : '16px';
-            const rightOffset = isMobile ? '5px' : '16px';
-            console.log('[MAFIA CHAT] isMobile:', isMobile, 'offsets:', bottomOffset, rightOffset);
+            // На мобильных всегда слева, на десктопе справа
+            const leftOffset = isMobile ? '16px' : 'auto';
+            const rightOffset = isMobile ? 'auto' : '16px';
+            console.log('[MAFIA CHAT] isMobile:', isMobile, 'offsets:', bottomOffset, leftOffset, rightOffset);
             
             const widgetContainer = document.createElement('div');
             widgetContainer.id = 'mafia-chat-widget-wrapper';
             // Минимальный размер для кнопки, но overflow: visible чтобы баббл был виден
-            widgetContainer.style.cssText = 'position: fixed; bottom: ' + bottomOffset + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
+            // На мобильных позиционируем слева, на десктопе справа
+            let containerStyle = 'position: fixed; bottom: ' + bottomOffset + '; z-index: 999999 !important; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
+            if (isMobile) {
+                containerStyle += ' left: ' + leftOffset + '; right: auto;';
+            } else {
+                containerStyle += ' right: ' + rightOffset + '; left: auto;';
+            }
+            widgetContainer.style.cssText = containerStyle;
             document.body.appendChild(widgetContainer);
             console.log('[MAFIA CHAT] Контейнер создан и добавлен в DOM');
-        
+            
             // Обновляем отступы при изменении размера окна
             window.addEventListener('resize', function() {
                 try {
                     const isMobileNow = window.innerWidth <= 768;
                     const newBottom = isMobileNow ? '5px' : '16px';
-                    const newRight = isMobileNow ? '5px' : '16px';
+                    const newLeft = isMobileNow ? '16px' : 'auto';
+                    const newRight = isMobileNow ? 'auto' : '16px';
                     widgetContainer.style.bottom = newBottom;
-                    widgetContainer.style.right = newRight;
+                    if (isMobileNow) {
+                        widgetContainer.style.left = newLeft;
+                        widgetContainer.style.right = 'auto';
+                    } else {
+                        widgetContainer.style.right = newRight;
+                        widgetContainer.style.left = 'auto';
+                    }
                 } catch (e) {
                     console.error('[MAFIA CHAT] Ошибка в resize:', e);
                 }
@@ -75,7 +91,14 @@ module.exports = (req, res) => {
             iframe.src = WIDGET_URL + '?widget=true';
             console.log('[MAFIA CHAT] iframe src:', iframe.src);
             // Минимальный размер для кнопки, баббл будет виден через overflow: visible контейнера
-            iframe.style.cssText = 'border: none; background: transparent; position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; pointer-events: auto !important; z-index: 999999 !important;';
+            // На мобильных позиционируем iframe слева, на десктопе справа
+            let iframeStyle = 'border: none; background: transparent; position: absolute; bottom: 0; width: 80px; height: 80px; pointer-events: auto !important; z-index: 999999 !important;';
+            if (isMobile) {
+                iframeStyle += ' left: 0; right: auto;';
+            } else {
+                iframeStyle += ' right: 0; left: auto;';
+            }
+            iframe.style.cssText = iframeStyle;
             iframe.allow = 'microphone';
             iframe.scrolling = 'no';
             iframe.frameBorder = '0';
@@ -127,11 +150,25 @@ module.exports = (req, res) => {
                 try {
                     console.log('[MAFIA CHAT] updateContainerSize:', isChatOpen);
                     chatIsOpen = isChatOpen;
+                    const isMobileNow = window.innerWidth <= 768;
+                    
                     if (isChatOpen) {
                         widgetContainer.style.width = '400px';
                         widgetContainer.style.height = '700px';
                         iframe.style.width = '400px';
                         iframe.style.height = '700px';
+                        // При открытии чата на мобильных позиционируем слева
+                        if (isMobileNow) {
+                            widgetContainer.style.left = '16px';
+                            widgetContainer.style.right = 'auto';
+                            iframe.style.left = '0';
+                            iframe.style.right = 'auto';
+                        } else {
+                            widgetContainer.style.right = '16px';
+                            widgetContainer.style.left = 'auto';
+                            iframe.style.right = '0';
+                            iframe.style.left = 'auto';
+                        }
                         console.log('[MAFIA CHAT] Контейнер увеличен до 400x700px');
                     } else {
                         // Чат закрыт - минимальный размер
@@ -139,6 +176,18 @@ module.exports = (req, res) => {
                         widgetContainer.style.height = '80px';
                         iframe.style.width = '80px';
                         iframe.style.height = '80px';
+                        // При закрытии чата на мобильных всегда слева
+                        if (isMobileNow) {
+                            widgetContainer.style.left = '16px';
+                            widgetContainer.style.right = 'auto';
+                            iframe.style.left = '0';
+                            iframe.style.right = 'auto';
+                        } else {
+                            widgetContainer.style.right = '16px';
+                            widgetContainer.style.left = 'auto';
+                            iframe.style.right = '0';
+                            iframe.style.left = 'auto';
+                        }
                         console.log('[MAFIA CHAT] Контейнер уменьшен до 80x80px');
                     }
                 } catch (e) {
