@@ -1808,48 +1808,176 @@
         function loadHistory() { const saved = localStorage.getItem('chat_history'); if (saved) messages = JSON.parse(saved); }
         function openTelegramLink() { window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank'); }
         
-        // Инициализация прокрутки чипсов (колесико мыши + свайп)
+        // Инициализация прокрутки чипсов (колесико мыши + drag + свайп)
         function initChipsScroll() {
             const chipsContainer = els.chips;
             if (!chipsContainer) return;
             
             let isScrolling = false;
+            let isDragging = false;
             let startX = 0;
             let scrollLeft = 0;
+            let velocity = 0;
+            let lastX = 0;
+            let lastTime = 0;
+            let animationFrame = null;
             
-            // Прокрутка колесиком мыши (только на ПК)
-            chipsContainer.addEventListener('wheel', function(e) {
-                // Проверяем, что это горизонтальная прокрутка или можем прокрутить горизонтально
-                if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-                    // Вертикальная прокрутка - конвертируем в горизонтальную
-                    e.preventDefault();
-                    chipsContainer.scrollLeft += e.deltaY;
-                } else {
-                    // Горизонтальная прокрутка - разрешаем
-                    e.preventDefault();
-                    chipsContainer.scrollLeft += e.deltaX;
+            // Плавная прокрутка с инерцией
+            function smoothScroll() {
+                if (Math.abs(velocity) < 0.5) {
+                    velocity = 0;
+                    if (animationFrame) {
+                        cancelAnimationFrame(animationFrame);
+                        animationFrame = null;
+                    }
+                    return;
                 }
+                
+                chipsContainer.scrollLeft -= velocity;
+                velocity *= 0.92; // Замедление (трение)
+                
+                animationFrame = requestAnimationFrame(smoothScroll);
+            }
+            
+            // Прокрутка колесиком мыши (только на ПК) - ПЛАВНАЯ
+            chipsContainer.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                
+                // Определяем направление и скорость
+                const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+                const scrollSpeed = delta * 0.8; // Плавная скорость
+                
+                // Плавная прокрутка с easing
+                const targetScroll = chipsContainer.scrollLeft + scrollSpeed;
+                const startScroll = chipsContainer.scrollLeft;
+                const distance = targetScroll - startScroll;
+                let currentTime = 0;
+                const duration = 300; // Длительность анимации
+                
+                function easeOutCubic(t) {
+                    return 1 - Math.pow(1 - t, 3);
+                }
+                
+                function animate() {
+                    currentTime += 16; // ~60fps
+                    const progress = Math.min(currentTime / duration, 1);
+                    const eased = easeOutCubic(progress);
+                    
+                    chipsContainer.scrollLeft = startScroll + (distance * eased);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    }
+                }
+                
+                animate();
             }, { passive: false });
             
-            // Свайп на мобильном (touch events)
+            // Перетаскивание мышкой (drag-to-scroll) на ПК
+            chipsContainer.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                chipsContainer.style.cursor = 'grabbing';
+                chipsContainer.style.userSelect = 'none';
+                startX = e.pageX - chipsContainer.offsetLeft;
+                scrollLeft = chipsContainer.scrollLeft;
+                lastX = e.pageX;
+                lastTime = Date.now();
+                velocity = 0;
+                
+                // Останавливаем плавную прокрутку если была
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                    animationFrame = null;
+                }
+            });
+            
+            chipsContainer.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                
+                const x = e.pageX - chipsContainer.offsetLeft;
+                const walk = (x - startX) * 1.2; // Плавный коэффициент
+                chipsContainer.scrollLeft = scrollLeft - walk;
+                
+                // Вычисляем скорость для инерции
+                const now = Date.now();
+                const timeDelta = now - lastTime;
+                if (timeDelta > 0) {
+                    const distance = e.pageX - lastX;
+                    velocity = (distance / timeDelta) * 8; // Коэффициент инерции
+                }
+                lastX = e.pageX;
+                lastTime = now;
+            });
+            
+            chipsContainer.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    chipsContainer.style.cursor = 'grab';
+                    chipsContainer.style.userSelect = '';
+                    
+                    // Запускаем плавную прокрутку с инерцией
+                    if (Math.abs(velocity) > 0.5) {
+                        smoothScroll();
+                    }
+                }
+            });
+            
+            chipsContainer.addEventListener('mouseleave', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    chipsContainer.style.cursor = 'grab';
+                    chipsContainer.style.userSelect = '';
+                    
+                    // Запускаем плавную прокрутку с инерцией
+                    if (Math.abs(velocity) > 0.5) {
+                        smoothScroll();
+                    }
+                }
+            });
+            
+            // Устанавливаем курсор grab по умолчанию
+            chipsContainer.style.cursor = 'grab';
+            
+            // Свайп на мобильном (touch events) - ПЛАВНЫЙ
             chipsContainer.addEventListener('touchstart', function(e) {
                 isScrolling = true;
                 startX = e.touches[0].pageX - chipsContainer.offsetLeft;
                 scrollLeft = chipsContainer.scrollLeft;
-                chipsContainer.style.scrollBehavior = 'auto'; // Отключаем smooth для touch
+                lastX = e.touches[0].pageX;
+                lastTime = Date.now();
+                velocity = 0;
+                chipsContainer.style.scrollBehavior = 'auto';
             }, { passive: true });
             
             chipsContainer.addEventListener('touchmove', function(e) {
                 if (!isScrolling) return;
                 e.preventDefault();
                 const x = e.touches[0].pageX - chipsContainer.offsetLeft;
-                const walk = (x - startX) * 1.5; // Увеличиваем скорость свайпа
+                const walk = (x - startX) * 1.1; // Плавный коэффициент
                 chipsContainer.scrollLeft = scrollLeft - walk;
+                
+                // Вычисляем скорость для инерции
+                const now = Date.now();
+                const timeDelta = now - lastTime;
+                if (timeDelta > 0) {
+                    const distance = e.touches[0].pageX - lastX;
+                    velocity = (distance / timeDelta) * 10; // Коэффициент инерции
+                }
+                lastX = e.touches[0].pageX;
+                lastTime = now;
             }, { passive: false });
             
             chipsContainer.addEventListener('touchend', function() {
-                isScrolling = false;
-                chipsContainer.style.scrollBehavior = 'smooth'; // Включаем smooth обратно
+                if (isScrolling) {
+                    isScrolling = false;
+                    chipsContainer.style.scrollBehavior = 'smooth';
+                    
+                    // Запускаем плавную прокрутку с инерцией
+                    if (Math.abs(velocity) > 0.5) {
+                        smoothScroll();
+                    }
+                }
             }, { passive: true });
         }
         function closeWelcome(e) { 
