@@ -47,7 +47,15 @@ module.exports = async (req, res) => {
         const update = req.body;
         
         // Логирование для отладки
-        console.log('Received update:', JSON.stringify(update, null, 2));
+        console.log('=== НОВОЕ ОБНОВЛЕНИЕ ===');
+        console.log('Update type:', update.message ? 'message' : update.callback_query ? 'callback_query' : 'other');
+        if (update.message) {
+            console.log('Chat ID:', update.message.chat.id);
+            console.log('Chat type:', update.message.chat.type);
+            console.log('Is reply:', !!update.message.reply_to_message);
+            console.log('Text:', update.message.text?.substring(0, 100));
+        }
+        console.log('Full update:', JSON.stringify(update, null, 2));
 
         // Обработка команды /start
         if (update.message && update.message.text === '/start') {
@@ -164,21 +172,52 @@ module.exports = async (req, res) => {
 
         // ПРИОРИТЕТ 1: Обработка ответов менеджеров через REPLY в группе
         if (update.message && update.message.chat.id === GROUP_ID && update.message.reply_to_message) {
+            console.log('=== ОБРАБОТКА REPLY ИЗ ГРУППЫ ===');
+            console.log('Chat ID:', update.message.chat.id);
+            console.log('GROUP_ID:', GROUP_ID);
+            console.log('Has reply_to_message:', !!update.message.reply_to_message);
+            
             const repliedMessageId = update.message.reply_to_message.message_id;
-            const text = update.message.text;
+            const text = update.message.text || '';
+            
+            console.log('Replied message ID:', repliedMessageId);
+            console.log('Reply text:', text);
+            console.log('MessageMap size:', messageMap.size);
+            console.log('MessageMap keys:', Array.from(messageMap.keys()).slice(-5));
             
             // Пытаемся найти userId из messageMap
             let targetUserId = messageMap.get(repliedMessageId);
+            console.log('Found userId from map:', targetUserId);
             
-            // Если не нашли в map, пытаемся извлечь из текста сообщения (ID: 123456789)
+            // Если не нашли в map, пытаемся извлечь из текста сообщения
             if (!targetUserId && update.message.reply_to_message.text) {
-                const idMatch = update.message.reply_to_message.text.match(/🆔 ID: (\d+)/);
-                if (idMatch) {
-                    targetUserId = parseInt(idMatch[1]);
+                const replyText = update.message.reply_to_message.text;
+                console.log('Trying to extract ID from text:', replyText.substring(0, 300));
+                
+                // Пробуем разные форматы: 🆔 ID: 123456789, 🆔 123456789, ID: 123456789
+                const patterns = [
+                    /🆔\s*ID:\s*(\d+)/,
+                    /🆔\s*(\d{9,})/,  // минимум 9 цифр для Telegram ID
+                    /ID:\s*(\d{9,})/,
+                    /🆔\s*(\d+)/
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = replyText.match(pattern);
+                    if (match) {
+                        targetUserId = parseInt(match[1]);
+                        console.log(`✅ Extracted userId using pattern ${pattern}:`, targetUserId);
+                        break;
+                    }
                 }
             }
             
+            console.log('Final targetUserId:', targetUserId);
+            console.log('Text exists:', !!text);
+            console.log('Text starts with /:', text.startsWith('/'));
+            
             if (targetUserId && text && !text.startsWith('/')) {
+                console.log('✅ Условие выполнено, отправляем сообщение клиенту');
                 const managerName = update.message.from.first_name + (update.message.from.last_name ? ' ' + update.message.from.last_name : '');
                 
                 try {
@@ -258,11 +297,18 @@ module.exports = async (req, res) => {
                 
                 res.status(200).json({ ok: true });
                 return;
+            } else {
+                console.log('❌ Условие НЕ выполнено:', {
+                    hasTargetUserId: !!targetUserId,
+                    hasText: !!text,
+                    textStartsWithSlash: text.startsWith('/')
+                });
             }
         }
 
         // Пропускаем сообщения из группы (кроме команд и reply)
-        if (update.message && update.message.chat.id === GROUP_ID) {
+        if (update.message && update.message.chat.id === GROUP_ID && !update.message.reply_to_message) {
+            console.log('Сообщение из группы без reply, пропускаем');
             res.status(200).json({ ok: true });
             return;
         }
