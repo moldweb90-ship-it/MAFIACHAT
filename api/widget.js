@@ -94,7 +94,8 @@ module.exports = (req, res) => {
             const welcomeBubble = document.createElement('div');
             welcomeBubble.id = 'mafia-chat-welcome-bubble';
             welcomeBubble.className = 'mafia-chat-welcome-bubble';
-            welcomeBubble.style.cssText = 'position: fixed; bottom: ' + (isMobile ? '90px' : '100px') + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: auto; background: white; padding: 12px 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-width: 280px; display: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; border: 1px solid #e5e7eb;';
+            // УБРАЛ display: none - баббл будет показываться через таймер
+            welcomeBubble.style.cssText = 'position: fixed; bottom: ' + (isMobile ? '90px' : '100px') + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: auto; background: white; padding: 12px 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-width: 280px; display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.3s ease-out, transform 0.3s ease-out; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; border: 1px solid #e5e7eb;';
             
             // Содержимое баббла
             welcomeBubble.innerHTML = '<div style="display: flex; gap: 12px; align-items: center;"><div style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex-shrink: 0;"><img src="https://raw.githubusercontent.com/moldweb90-ship-it/MAFIACHAT/main/public/Eiva.jpg" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EФото%3C/text%3E%3C/svg%3E\'"></div><div style="flex: 1;"><div style="font-weight: 600; margin-bottom: 4px; color: #111827;">Добрый вечер! 👋</div><div style="color: #6b7280; font-size: 13px;">Чем могу помочь?</div></div><button onclick="document.getElementById(\\'mafia-chat-welcome-bubble\\').style.display=\\'none\\'; if(window.mafiaChatToggle) window.mafiaChatToggle();" style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: white; border: 1px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #6b7280; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">✕</button></div>';
@@ -148,15 +149,22 @@ module.exports = (req, res) => {
                         updateContainerSize(event.data.isOpen);
                     }
                     
-                    // Обрабатываем события показа/скрытия баббла
+                    // Обрабатываем события показа/скрытия баббла (от iframe)
                     if (event.data && event.data.type === 'bubble-visibility') {
                         console.log('[MAFIA CHAT] bubble-visibility:', event.data.isVisible);
                         if (event.data.isVisible) {
                             welcomeBubble.style.display = 'block';
-                            welcomeBubble.style.animation = 'fadeInUp 0.3s ease-out';
+                            setTimeout(function() {
+                                welcomeBubble.style.opacity = '1';
+                                welcomeBubble.style.transform = 'translateY(0)';
+                            }, 10);
                             console.log('[MAFIA CHAT] Welcome bubble показан');
                         } else {
-                            welcomeBubble.style.display = 'none';
+                            welcomeBubble.style.opacity = '0';
+                            welcomeBubble.style.transform = 'translateY(10px)';
+                            setTimeout(function() {
+                                welcomeBubble.style.display = 'none';
+                            }, 300);
                             console.log('[MAFIA CHAT] Welcome bubble скрыт');
                         }
                     }
@@ -176,7 +184,11 @@ module.exports = (req, res) => {
                         iframe.style.width = '400px';
                         iframe.style.height = '700px';
                         // Скрываем баббл когда чат открыт
-                        welcomeBubble.style.display = 'none';
+                        welcomeBubble.style.opacity = '0';
+                        welcomeBubble.style.transform = 'translateY(10px)';
+                        setTimeout(function() {
+                            welcomeBubble.style.display = 'none';
+                        }, 300);
                         console.log('[MAFIA CHAT] Контейнер увеличен до 400x700px');
                     } else {
                         // Чат закрыт - минимальный размер
@@ -227,6 +239,38 @@ module.exports = (req, res) => {
             style.textContent = '@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }';
             document.head.appendChild(style);
             console.log('[MAFIA CHAT] CSS анимация добавлена');
+            
+            // Показываем баббл через 10 секунд (если не был закрыт)
+            const BUBBLE_DELAY = 10000; // 10 секунд
+            setTimeout(function() {
+                try {
+                    // Проверяем, не был ли баббл закрыт
+                    if (!sessionStorage.getItem('mafia-chat-bubble-closed')) {
+                        console.log('[MAFIA CHAT] Показываем welcome bubble');
+                        welcomeBubble.style.display = 'block';
+                        // Запускаем анимацию через небольшой таймаут
+                        setTimeout(function() {
+                            welcomeBubble.style.opacity = '1';
+                            welcomeBubble.style.transform = 'translateY(0)';
+                        }, 10);
+                    } else {
+                        console.log('[MAFIA CHAT] Welcome bubble был закрыт, не показываем');
+                    }
+                } catch (e) {
+                    console.error('[MAFIA CHAT] Ошибка при показе welcome bubble:', e);
+                }
+            }, BUBBLE_DELAY);
+            
+            // Обработчик закрытия баббла
+            const closeButton = welcomeBubble.querySelector('button');
+            if (closeButton) {
+                closeButton.onclick = function(e) {
+                    e.stopPropagation();
+                    welcomeBubble.style.display = 'none';
+                    sessionStorage.setItem('mafia-chat-bubble-closed', 'true');
+                    console.log('[MAFIA CHAT] Welcome bubble закрыт пользователем');
+                };
+            }
             
             console.log('[MAFIA CHAT] Виджет успешно инициализирован!');
         } catch (e) {
