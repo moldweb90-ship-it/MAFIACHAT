@@ -702,11 +702,11 @@
                     if (!userName && messages.length === 0) {
                         els.intro.classList.remove('hidden');
                         els.chatUI.classList.add('hidden');
-                        setTimeout(() => els.usernameInput.focus(), 300);
+                        // Убрано автоматическое выделение - пользователь сам выберет когда писать
                     } else {
                         els.intro.classList.add('hidden');
                         els.chatUI.classList.remove('hidden');
-                        setTimeout(() => els.input.focus(), 300);
+                        // Убрано автоматическое выделение - пользователь сам выберет когда писать
                         scrollToBottom();
                 }
 
@@ -739,7 +739,7 @@
                 const timeGreeting = getGreetingText();
                 saveMessage(`${timeGreeting}, ${userName}! 👋<br>Я Анна, ваш персональный флорист. Подскажу по ценам, доставке и помогу удивить! Чем могу быть полезна?`, 'in');
                 
-                setTimeout(() => els.input.focus(), 300);
+                // Убрано автоматическое выделение - пользователь сам выберет когда писать
             } else {
                 els.usernameInput.classList.add('ring-2', 'ring-red-400');
                 setTimeout(() => els.usernameInput.classList.remove('ring-2', 'ring-red-400'), 500);
@@ -2267,14 +2267,14 @@
                 els.intro.classList.remove('hidden');
                 els.chatUI.classList.add('hidden');
                 els.usernameInput.value = '';
-                setTimeout(() => els.usernameInput.focus(), 300);
+                // Убрано автоматическое выделение - пользователь сам выберет когда писать
             } else {
                 // Показываем приветственное сообщение
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 const greeting = getGreetingText();
                 saveMessage(`${greeting}, ${userName}! 👋<br>Я Анна, ваш персональный флорист. Подскажу по ценам, доставке и помогу удивить! Чем могу быть полезна?`, 'in');
-                setTimeout(() => els.input.focus(), 300);
+                // Убрано автоматическое выделение - пользователь сам выберет когда писать
             }
             
             scrollToBottom();
