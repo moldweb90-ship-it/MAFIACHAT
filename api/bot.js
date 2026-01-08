@@ -183,10 +183,33 @@ module.exports = async (req, res) => {
                 
                 try {
                     await bot.sendMessage(targetUserId, 
-                        `💬 Ответ от менеджера:\n\n${text}\n\n` +
-                        `━━━━━━━━━━━━━━━━\n` +
-                        `Цветочная Мафия 🌹`
+                        `💬 <b>Ответ от менеджера:</b>\n\n${text}\n\n` +
+                        `━━━━━━━━━━━━━━━━━━━━\n` +
+                        `🌹 <b>Цветочная Мафия</b>\n` +
+                        `🌐 flowersmafya.ru\n` +
+                        `📞 8 (953) 573-69-06\n` +
+                        `📞 8 (952) 478-87-07`,
+                        { parse_mode: 'HTML' }
                     );
+                    
+                    // Отмечаем сообщение как отвеченное
+                    try {
+                        const originalMessageId = update.message.reply_to_message.message_id;
+                        const originalText = update.message.reply_to_message.text || update.message.reply_to_message.caption || '';
+                        
+                        // Редактируем оригинальное сообщение, заменяя статус
+                        if (originalText.includes('🔴 <b>НЕ ОТВЕЧЕНО</b>')) {
+                            const newText = originalText.replace('🔴 <b>НЕ ОТВЕЧЕНО</b>', '✅ <b>ОТВЕЧЕНО</b>');
+                            await bot.editMessageText(newText, {
+                                chat_id: GROUP_ID,
+                                message_id: originalMessageId,
+                                parse_mode: 'HTML'
+                            });
+                        }
+                    } catch (editErr) {
+                        // Если не удалось отредактировать - не критично
+                        console.log('Не удалось отредактировать сообщение:', editErr.message);
+                    }
                     
                     // Убрано сообщение об успешной отправке - оно отвлекает админов
                     // Сообщение об ошибке остается для диагностики
@@ -226,17 +249,15 @@ module.exports = async (req, res) => {
             }
 
             const messageToGroup = 
-                `📩 Новое сообщение от клиента:\n\n` +
-                `👤 Имя: ${userName}\n` +
-                `🆔 ID: ${userId}\n` +
-                `📱 Username: ${username}\n\n` +
-                `💬 Сообщение:\n${text}\n\n` +
-                `━━━━━━━━━━━━━━━━━━━━\n` +
-                `💬 Ответьте на это сообщение, чтобы ответить клиенту`;
+                `🔴 <b>НЕ ОТВЕЧЕНО</b>\n\n` +
+                `👤 ${userName} ${username !== 'без username' ? username : ''}\n` +
+                `🆔 ${userId}\n\n` +
+                `💬 <b>${text}</b>\n\n` +
+                `💬 Ответьте на это сообщение`;
 
             try {
                 console.log(`Отправка сообщения в группу ${GROUP_ID} от пользователя ${userId}`);
-                const sentMessage = await bot.sendMessage(GROUP_ID, messageToGroup);
+                const sentMessage = await bot.sendMessage(GROUP_ID, messageToGroup, { parse_mode: 'HTML' });
                 console.log(`Сообщение успешно отправлено в группу, message_id: ${sentMessage.message_id}`);
                 
                 // Сохраняем связь message_id -> userId
@@ -417,9 +438,13 @@ module.exports = async (req, res) => {
 
                 try {
                     await bot.sendMessage(targetUserId, 
-                        `💬 Ответ от менеджера:\n\n${replyText}\n\n` +
-                        `━━━━━━━━━━━━━━━━\n` +
-                        `Цветочная Мафия 🌹`
+                        `💬 <b>Ответ от менеджера:</b>\n\n${replyText}\n\n` +
+                        `━━━━━━━━━━━━━━━━━━━━\n` +
+                        `🌹 <b>Цветочная Мафия</b>\n` +
+                        `🌐 flowersmafya.ru\n` +
+                        `📞 8 (953) 573-69-06\n` +
+                        `📞 8 (952) 478-87-07`,
+                        { parse_mode: 'HTML' }
                     );
                     // Убрано сообщение об успешной отправке - оно отвлекает админов
                 } catch (err) {
