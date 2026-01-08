@@ -540,6 +540,10 @@
                             els.welcome.classList.add('pop-in'); 
                             playSound('in');
                             sessionStorage.setItem('bubble_shown', 'true');
+                            // Уведомляем родительское окно о показе баббла
+                            if (isWidgetMode && window.parent) {
+                                window.parent.postMessage({ type: 'bubble-visibility', isVisible: true }, '*');
+                            }
                         }
                     } 
                 }, BUBBLE_DELAY);
@@ -553,6 +557,10 @@
                             els.welcome.classList.add('pop-in'); 
                             playSound('in'); 
                             sessionStorage.setItem('bubble_shown', 'true');
+                            // Уведомляем родительское окно о показе баббла
+                            if (isWidgetMode && window.parent) {
+                                window.parent.postMessage({ type: 'bubble-visibility', isVisible: true }, '*');
+                            }
                         }
                     } 
                 }, BUBBLE_DELAY);
@@ -599,6 +607,10 @@
                 els.iconClosed.classList.add('hidden');
                 els.iconOpened.classList.remove('hidden');
                 els.welcome.classList.add('hidden');
+                // Уведомляем родительское окно о скрытии баббла
+                if (isWidgetMode && window.parent) {
+                    window.parent.postMessage({ type: 'bubble-visibility', isVisible: false }, '*');
+                }
                 resetBadge();
                 
                 // Show Intro Screen if no name and no messages (работает и в режиме виджета)
@@ -1757,6 +1769,10 @@
             sessionStorage.setItem('bubble_closed', 'true'); 
             sessionStorage.setItem('bubble_shown', 'true'); // Помечаем что показывали
             console.log('Welcome bubble закрыт');
+            // Уведомляем родительское окно о скрытии баббла
+            if (isWidgetMode && window.parent) {
+                window.parent.postMessage({ type: 'bubble-visibility', isVisible: false }, '*');
+            }
         }
         function incrementBadge() { unreadCount++; els.badgeCount.innerText = unreadCount; els.badge.classList.remove('hidden'); }
         function resetBadge() { unreadCount = 0; els.badge.classList.add('hidden'); }

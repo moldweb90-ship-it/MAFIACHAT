@@ -35,13 +35,13 @@ module.exports = (req, res) => {
             return;
         }
         
-        // Создаем контейнер для виджета (минимальный размер для кнопки)
+        // Создаем контейнер для виджета
         const isMobile = window.innerWidth <= 768;
         const bottomOffset = isMobile ? '5px' : '16px';
         const rightOffset = isMobile ? '5px' : '16px';
         const widgetContainer = document.createElement('div');
         widgetContainer.id = 'mafia-chat-widget-wrapper';
-        // Начальный размер только для кнопки (80x80px), чтобы не блокировать клики на сайте
+        // Минимальный размер для кнопки, но overflow: visible чтобы баббл был виден
         widgetContainer.style.cssText = 'position: fixed; bottom: ' + bottomOffset + '; right: ' + rightOffset + '; z-index: 999999 !important; pointer-events: none; width: 80px; height: 80px; overflow: visible;';
         document.body.appendChild(widgetContainer);
         
@@ -54,11 +54,11 @@ module.exports = (req, res) => {
             widgetContainer.style.right = newRight;
         });
         
-        // Загружаем виджет через iframe (начальный размер только для кнопки)
+        // Загружаем виджет через iframe
         const iframe = document.createElement('iframe');
         iframe.id = 'mafia-chat-iframe';
         iframe.src = WIDGET_URL + '?widget=true';
-        // Начальный размер только для кнопки, чтобы не блокировать клики на сайте
+        // Минимальный размер для кнопки, баббл будет виден через overflow: visible контейнера
         iframe.style.cssText = 'border: none; background: transparent; position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; pointer-events: auto !important; z-index: 999999 !important;';
         iframe.allow = 'microphone';
         iframe.scrolling = 'no';
@@ -66,6 +66,10 @@ module.exports = (req, res) => {
         iframe.setAttribute('allowtransparency', 'true');
         
         widgetContainer.appendChild(iframe);
+        
+        // Состояние чата и баббла
+        let chatIsOpen = false;
+        let bubbleIsVisible = false;
         
         // Слушаем сообщения от iframe через postMessage
         window.addEventListener('message', function(event) {
@@ -77,21 +81,60 @@ module.exports = (req, res) => {
             if (event.data && event.data.type === 'chat-toggle') {
                 updateContainerSize(event.data.isOpen);
             }
+            
+            // Обрабатываем события показа/скрытия баббла
+            if (event.data && event.data.type === 'bubble-visibility') {
+                updateBubbleSize(event.data.isVisible);
+            }
         });
         
+        // Функция обновления размера для баббла
+        function updateBubbleSize(isVisible) {
+            bubbleIsVisible = isVisible;
+            if (isVisible) {
+                // Баббл виден - увеличиваем iframe чтобы он не обрезался
+                // Баббл находится на bottom: 80px от кнопки, нужна высота ~280px
+                // Но только если чат закрыт (если чат открыт, размер уже большой)
+                if (!chatIsOpen) {
+                    widgetContainer.style.width = '320px';
+                    widgetContainer.style.height = '300px';
+                    iframe.style.width = '320px';
+                    iframe.style.height = '300px';
+                }
+            } else {
+                // Баббл скрыт - уменьшаем до минимума (только если чат закрыт)
+                if (!chatIsOpen) {
+                    widgetContainer.style.width = '80px';
+                    widgetContainer.style.height = '80px';
+                    iframe.style.width = '80px';
+                    iframe.style.height = '80px';
+                }
+            }
+        }
+        
         // Функция обновления размера контейнера
-        function updateContainerSize(isOpen) {
-            if (isOpen) {
+        function updateContainerSize(isChatOpen) {
+            chatIsOpen = isChatOpen;
+            if (isChatOpen) {
                 widgetContainer.style.width = '400px';
                 widgetContainer.style.height = '700px';
                 iframe.style.width = '400px';
                 iframe.style.height = '700px';
             } else {
-                // Чат закрыт - минимальный размер только для кнопки
-                widgetContainer.style.width = '80px';
-                widgetContainer.style.height = '80px';
-                iframe.style.width = '80px';
-                iframe.style.height = '80px';
+                // Чат закрыт - проверяем состояние баббла
+                if (bubbleIsVisible) {
+                    // Баббл виден - оставляем размер для баббла
+                    widgetContainer.style.width = '320px';
+                    widgetContainer.style.height = '300px';
+                    iframe.style.width = '320px';
+                    iframe.style.height = '300px';
+                } else {
+                    // Баббл скрыт - уменьшаем до минимума
+                    widgetContainer.style.width = '80px';
+                    widgetContainer.style.height = '80px';
+                    iframe.style.width = '80px';
+                    iframe.style.height = '80px';
+                }
             }
         }
         
