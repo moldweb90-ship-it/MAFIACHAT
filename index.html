@@ -531,37 +531,39 @@
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 
-                // Показываем welcome bubble через 10 секунд
-                if (!sessionStorage.getItem('bubble_closed') && !sessionStorage.getItem('bubble_shown')) {
-                    setTimeout(() => { 
-                        if (!isOpen && els.welcome) { 
+                // Показываем welcome bubble через 10 секунд (если чат закрыт)
+                setTimeout(() => {
+                    if (!isOpen && els.welcome) { 
+                        // Проверяем, не был ли баббл закрыт в этой сессии
+                        if (!sessionStorage.getItem('bubble_closed')) {
                             els.welcome.classList.remove('hidden'); 
                             els.welcome.classList.add('pop-in'); 
                             playSound('in');
                             sessionStorage.setItem('bubble_shown', 'true');
-                        } 
-                    }, BUBBLE_DELAY);
-                }
+                        }
+                    } 
+                }, BUBBLE_DELAY);
             } else {
-                // Показываем welcome bubble через 10 секунд
-                if (!sessionStorage.getItem('bubble_closed') && !sessionStorage.getItem('bubble_shown')) {
-                    setTimeout(() => { 
-                        if (!isOpen && els.welcome) { 
+                // Показываем welcome bubble через 10 секунд (если чат закрыт)
+                setTimeout(() => { 
+                    if (!isOpen && els.welcome) { 
+                        // Проверяем, не был ли баббл закрыт в этой сессии
+                        if (!sessionStorage.getItem('bubble_closed')) {
                             els.welcome.classList.remove('hidden'); 
                             els.welcome.classList.add('pop-in'); 
-                            playSound('in');
+                            playSound('in'); 
                             sessionStorage.setItem('bubble_shown', 'true');
-                        } 
-                    }, BUBBLE_DELAY);
-                }
-                
-                // Автооткрытие чата только если нет сообщений
-                if (messages.length === 0) {
-                    setTimeout(() => { 
-                        if (!isOpen && !hasOpenedOnce) { 
-                            toggleChat(true); 
-                        } 
-                    }, WELCOME_DELAY);
+                        }
+                    } 
+                }, BUBBLE_DELAY);
+                    
+                    // Автооткрытие чата только если нет сообщений
+                    if (messages.length === 0) {
+                        setTimeout(() => { 
+                            if (!isOpen && !hasOpenedOnce) { 
+                                toggleChat(true); 
+                            } 
+                        }, WELCOME_DELAY);
                 }
             }
             
@@ -600,15 +602,15 @@
                 resetBadge();
                 
                 // Show Intro Screen if no name and no messages (работает и в режиме виджета)
-                if (!userName && messages.length === 0) {
-                    els.intro.classList.remove('hidden');
-                    els.chatUI.classList.add('hidden');
-                    setTimeout(() => els.usernameInput.focus(), 300);
-                } else {
-                    els.intro.classList.add('hidden');
-                    els.chatUI.classList.remove('hidden');
-                    setTimeout(() => els.input.focus(), 300);
-                    scrollToBottom();
+                    if (!userName && messages.length === 0) {
+                        els.intro.classList.remove('hidden');
+                        els.chatUI.classList.add('hidden');
+                        setTimeout(() => els.usernameInput.focus(), 300);
+                    } else {
+                        els.intro.classList.add('hidden');
+                        els.chatUI.classList.remove('hidden');
+                        setTimeout(() => els.input.focus(), 300);
+                        scrollToBottom();
                 }
 
             } else {
@@ -1752,7 +1754,7 @@
         function closeWelcome(e) { 
             if(e) e.stopPropagation(); 
             els.welcome.classList.add('hidden'); 
-            sessionStorage.setItem('bubble_closed', 'true');
+            sessionStorage.setItem('bubble_closed', 'true'); 
             sessionStorage.setItem('bubble_shown', 'true'); // Помечаем что показывали
             console.log('Welcome bubble закрыт');
         }
