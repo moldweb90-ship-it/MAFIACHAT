@@ -512,6 +512,9 @@
             loadHistory();
             setGreeting();
             
+            // Инициализация прокрутки чипсов
+            initChipsScroll();
+            
             // Слушаем сообщения от родительского окна (для открытия чата из баббла)
             if (isWidgetMode && window.parent) {
                 window.addEventListener('message', function(event) {
@@ -1804,6 +1807,51 @@
         function scrollToBottom() { els.area.scrollTop = els.area.scrollHeight; }
         function loadHistory() { const saved = localStorage.getItem('chat_history'); if (saved) messages = JSON.parse(saved); }
         function openTelegramLink() { window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank'); }
+        
+        // Инициализация прокрутки чипсов (колесико мыши + свайп)
+        function initChipsScroll() {
+            const chipsContainer = els.chips;
+            if (!chipsContainer) return;
+            
+            let isScrolling = false;
+            let startX = 0;
+            let scrollLeft = 0;
+            
+            // Прокрутка колесиком мыши (только на ПК)
+            chipsContainer.addEventListener('wheel', function(e) {
+                // Проверяем, что это горизонтальная прокрутка или можем прокрутить горизонтально
+                if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+                    // Вертикальная прокрутка - конвертируем в горизонтальную
+                    e.preventDefault();
+                    chipsContainer.scrollLeft += e.deltaY;
+                } else {
+                    // Горизонтальная прокрутка - разрешаем
+                    e.preventDefault();
+                    chipsContainer.scrollLeft += e.deltaX;
+                }
+            }, { passive: false });
+            
+            // Свайп на мобильном (touch events)
+            chipsContainer.addEventListener('touchstart', function(e) {
+                isScrolling = true;
+                startX = e.touches[0].pageX - chipsContainer.offsetLeft;
+                scrollLeft = chipsContainer.scrollLeft;
+                chipsContainer.style.scrollBehavior = 'auto'; // Отключаем smooth для touch
+            }, { passive: true });
+            
+            chipsContainer.addEventListener('touchmove', function(e) {
+                if (!isScrolling) return;
+                e.preventDefault();
+                const x = e.touches[0].pageX - chipsContainer.offsetLeft;
+                const walk = (x - startX) * 1.5; // Увеличиваем скорость свайпа
+                chipsContainer.scrollLeft = scrollLeft - walk;
+            }, { passive: false });
+            
+            chipsContainer.addEventListener('touchend', function() {
+                isScrolling = false;
+                chipsContainer.style.scrollBehavior = 'smooth'; // Включаем smooth обратно
+            }, { passive: true });
+        }
         function closeWelcome(e) { 
             if(e) e.stopPropagation(); 
             if (els.welcome) {
