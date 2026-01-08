@@ -5,6 +5,9 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const GROUP_ID = -1003691437577; // Техническая группа для админов
 // Публичная группа для клиентов (рассылки, новости, общение)
 const CLIENT_GROUP_INVITE_LINK = process.env.CLIENT_GROUP_INVITE_LINK || 'https://t.me/+6sQdMez_ZYZmMDdi';
+// ID группы клиентов для проверки членства
+// Получено через getChat для группы @flowersmafiann
+const CLIENT_GROUP_ID = process.env.CLIENT_GROUP_ID ? parseInt(process.env.CLIENT_GROUP_ID) : -1002785310644;
 
 // Для Vercel используем вебхуки вместо polling
 let bot;
@@ -16,6 +19,9 @@ if (BOT_TOKEN) {
 // Хранилище связей message_id -> userId (в памяти, для serverless функций)
 // В production лучше использовать Redis/KV, но для начала этого достаточно
 const messageMap = new Map();
+
+// Хранилище пользователей, которым уже отправили приглашение
+const invitedUsers = new Set();
 
 module.exports = async (req, res) => {
     // CORS headers
@@ -182,11 +188,8 @@ module.exports = async (req, res) => {
                         `Цветочная Мафия 🌹`
                     );
                     
-                    await bot.sendMessage(GROUP_ID, 
-                        `✅ Ответ отправлен клиенту\n` +
-                        `Менеджер: ${managerName}`,
-                        { reply_to_message_id: update.message.message_id }
-                    );
+                    // Убрано сообщение об успешной отправке - оно отвлекает админов
+                    // Сообщение об ошибке остается для диагностики
                 } catch (err) {
                     console.error('Ошибка отправки клиенту:', err);
                     await bot.sendMessage(GROUP_ID, 
@@ -246,23 +249,66 @@ module.exports = async (req, res) => {
                     entries.slice(-500).forEach(([k, v]) => messageMap.set(k, v));
                 }
                 
-                // Отправляем подтверждение клиенту + приглашение в группу
-                const confirmationMessage = 
+                // Отправляем подтверждение клиенту
+                await bot.sendMessage(chatId, 
                     '✅ Ваше сообщение отправлено менеджерам!\n\n' +
-                    'Мы ответим в течение минуты. ⏱️\n\n' +
-                    '🎁 Присоединяйтесь к нашему чату и получайте:\n' +
-                    '• 🔥 Эксклюзивные скидки и купоны\n' +
-                    '• 💰 Специальные предложения только для участников\n' +
-                    '• 🎉 Розыгрыши и подарки\n' +
-                    '• ⚡ Первыми узнавать о распродажах';
+                    'Мы ответим в течение минуты. ⏱️'
+                );
                 
-                await bot.sendMessage(chatId, confirmationMessage, {
-                    reply_markup: {
-                        inline_keyboard: [[
-                            { text: '💬 Присоединиться к чату', url: CLIENT_GROUP_INVITE_LINK }
-                        ]]
+                // Проверяем, нужно ли отправить приглашение в группу
+                // Отправляем только если:
+                // 1. Пользователю еще не отправляли приглашение
+                // 2. Пользователь не состоит в группе
+                if (!invitedUsers.has(userId)) {
+                    let shouldSendInvitation = true;
+                    
+                    // Если указан ID группы клиентов, проверяем членство
+                    if (CLIENT_GROUP_ID) {
+                        try {
+                            const member = await bot.getChatMember(CLIENT_GROUP_ID, userId);
+                            const isMember = member.status === 'member' || member.status === 'administrator' || member.status === 'creator';
+                            
+                            if (isMember) {
+                                // Пользователь уже в группе - не отправляем приглашение
+                                shouldSendInvitation = false;
+                                // Помечаем, чтобы не проверять снова
+                                invitedUsers.add(userId);
+                            }
+                        } catch (error) {
+                            // Если не удалось проверить (бот не админ или группа не найдена),
+                            // отправляем приглашение один раз
+                            console.log(`Не удалось проверить членство для ${userId}:`, error.message);
+                        }
                     }
-                });
+                    
+                    // Отправляем приглашение только если пользователь не в группе
+                    if (shouldSendInvitation) {
+                        const invitationMessage = 
+                            '🎁 Присоединяйтесь к нашему чату и получайте:\n' +
+                            '• 🔥 Эксклюзивные скидки и купоны\n' +
+                            '• 💰 Специальные предложения только для участников\n' +
+                            '• 🎉 Розыгрыши и подарки\n' +
+                            '• ⚡ Первыми узнавать о распродажах';
+                        
+                        await bot.sendMessage(chatId, invitationMessage, {
+                            reply_markup: {
+                                inline_keyboard: [[
+                                    { text: '💬 Присоединиться к чату', url: CLIENT_GROUP_INVITE_LINK }
+                                ]]
+                            }
+                        });
+                        
+                        // Помечаем, что приглашение отправлено
+                        invitedUsers.add(userId);
+                        
+                        // Очищаем старые записи (оставляем только последние 10000)
+                        if (invitedUsers.size > 10000) {
+                            const usersArray = Array.from(invitedUsers);
+                            invitedUsers.clear();
+                            usersArray.slice(-5000).forEach(id => invitedUsers.add(id));
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Ошибка отправки в группу:', error);
                 console.error('Детали ошибки:', error.response?.body || error.message);
@@ -306,16 +352,49 @@ module.exports = async (req, res) => {
                 messageMap.set(sentMessage.message_id, userId);
                 
                 await bot.sendMessage(chatId, 
-                    '✅ Фото отправлено менеджерам!\n\n' +
-                    '🎁 Присоединяйтесь к нашему чату и получайте эксклюзивные скидки и купоны!',
-                    {
-                        reply_markup: {
-                            inline_keyboard: [[
-                                { text: '💬 Присоединиться к чату', url: CLIENT_GROUP_INVITE_LINK }
-                            ]]
+                    '✅ Фото отправлено менеджерам!'
+                );
+                
+                // Проверяем, нужно ли отправить приглашение (только один раз)
+                if (!invitedUsers.has(userId)) {
+                    let shouldSendInvitation = true;
+                    
+                    // Если указан ID группы клиентов, проверяем членство
+                    if (CLIENT_GROUP_ID) {
+                        try {
+                            const member = await bot.getChatMember(CLIENT_GROUP_ID, userId);
+                            const isMember = member.status === 'member' || member.status === 'administrator' || member.status === 'creator';
+                            
+                            if (isMember) {
+                                shouldSendInvitation = false;
+                                invitedUsers.add(userId);
+                            }
+                        } catch (error) {
+                            console.log(`Не удалось проверить членство для ${userId}:`, error.message);
                         }
                     }
-                );
+                    
+                    if (shouldSendInvitation) {
+                        await bot.sendMessage(chatId, 
+                            '🎁 Присоединяйтесь к нашему чату и получайте эксклюзивные скидки и купоны!',
+                            {
+                                reply_markup: {
+                                    inline_keyboard: [[
+                                        { text: '💬 Присоединиться к чату', url: CLIENT_GROUP_INVITE_LINK }
+                                    ]]
+                                }
+                            }
+                        );
+                        invitedUsers.add(userId);
+                        
+                        // Очищаем старые записи
+                        if (invitedUsers.size > 10000) {
+                            const usersArray = Array.from(invitedUsers);
+                            invitedUsers.clear();
+                            usersArray.slice(-5000).forEach(id => invitedUsers.add(id));
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Ошибка отправки фото в группу:', error);
                 try {
@@ -336,15 +415,21 @@ module.exports = async (req, res) => {
                 const replyText = match[2];
                 const managerName = update.message.from.first_name;
 
-                await bot.sendMessage(targetUserId, 
-                    `💬 Ответ от менеджера:\n\n${replyText}\n\n` +
-                    `━━━━━━━━━━━━━━━━\n` +
-                    `Цветочная Мафия 🌹`
-                );
-                await bot.sendMessage(GROUP_ID, 
-                    `✅ Ответ отправлен клиенту ${targetUserId}\n` +
-                    `Менеджер: ${managerName}`
-                );
+                try {
+                    await bot.sendMessage(targetUserId, 
+                        `💬 Ответ от менеджера:\n\n${replyText}\n\n` +
+                        `━━━━━━━━━━━━━━━━\n` +
+                        `Цветочная Мафия 🌹`
+                    );
+                    // Убрано сообщение об успешной отправке - оно отвлекает админов
+                } catch (err) {
+                    console.error('Ошибка отправки клиенту через /send_:', err);
+                    await bot.sendMessage(GROUP_ID, 
+                        `❌ Ошибка отправки клиенту ${targetUserId}.\n` +
+                        `Ошибка: ${err.message || 'Неизвестная ошибка'}\n` +
+                        `Возможно, клиент заблокировал бота.`
+                    );
+                }
             }
         }
 
