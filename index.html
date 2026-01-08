@@ -347,7 +347,15 @@
         // Проверяем, открыт ли чат из виджета (iframe)
         const isWidgetMode = new URLSearchParams(window.location.search).get('widget') === 'true';
         // Проверяем имя из localStorage (работает и в режиме виджета)
-        let userName = localStorage.getItem('chat_username') || '';
+        let userName = '';
+        try {
+            if (typeof(Storage) !== "undefined" && window.localStorage) {
+                userName = localStorage.getItem('chat_username') || '';
+                if (userName) console.log('[CHAT] Имя пользователя загружено:', userName);
+            }
+        } catch (e) {
+            console.error('[CHAT] Ошибка загрузки имени:', e);
+        }
         let lastBotResponse = ""; // To prevent loops
         let contextMemory = ""; // To remember dates/details
 
@@ -541,8 +549,8 @@
         ];
 
         /* --- INITIALIZATION --- */
-        document.addEventListener('DOMContentLoaded', () => {
-            loadHistory();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadHistory(); // История рендерится внутри loadHistory()
             setGreeting();
             
             // Инициализация прокрутки чипсов
@@ -714,7 +722,16 @@
             const name = els.usernameInput.value.trim();
             if (name) {
                 userName = name;
-                localStorage.setItem('chat_username', userName);
+                try {
+                    if (typeof(Storage) !== "undefined" && window.localStorage) {
+                        localStorage.setItem('chat_username', userName);
+                        console.log('[CHAT] Имя пользователя сохранено:', userName);
+                    } else {
+                        console.warn('[CHAT] localStorage недоступен, имя не сохранено');
+                    }
+                } catch (e) {
+                    console.error('[CHAT] Ошибка сохранения имени:', e);
+                }
                 els.intro.classList.add('hidden');
                 els.chatUI.classList.remove('hidden');
                 
@@ -731,7 +748,16 @@
 
         function skipName() {
             userName = 'Гость';
-            localStorage.setItem('chat_username', userName);
+            try {
+                if (typeof(Storage) !== "undefined" && window.localStorage) {
+                    localStorage.setItem('chat_username', userName);
+                    console.log('[CHAT] Имя пользователя сохранено:', userName);
+                } else {
+                    console.warn('[CHAT] localStorage недоступен, имя не сохранено');
+                }
+            } catch (e) {
+                console.error('[CHAT] Ошибка сохранения имени:', e);
+            }
             els.intro.classList.add('hidden');
             els.chatUI.classList.remove('hidden');
             saveMessage(`Здравствуйте! 👋<br>Я Анна, ваш персональный флорист. Чем могу помочь?`, 'in');
@@ -1742,7 +1768,9 @@
                 image: image
             };
             messages.push(msg);
-            localStorage.setItem('chat_history', JSON.stringify(messages));
+            // Используем универсальную систему хранения (localStorage + IndexedDB)
+            storage.saveHistory(messages);
+            console.log('[CHAT] Сообщение сохранено, всего сообщений:', messages.length);
             renderOneMessage(msg);
             scrollToBottom();
         }
@@ -1838,7 +1866,164 @@
         function vibrate() { if (navigator.vibrate) navigator.vibrate(10); }
         function playSound(type) { try { const audio = type === 'out' ? els.audioOut : els.audioIn; audio.currentTime = 0; audio.play().catch(e => {}); } catch(e){} }
         function scrollToBottom() { els.area.scrollTop = els.area.scrollHeight; }
-        function loadHistory() { const saved = localStorage.getItem('chat_history'); if (saved) messages = JSON.parse(saved); }
+        
+        // Универсальная система хранения для мобильных устройств
+        const storage = {
+            // Проверка доступности localStorage
+            isLocalStorageAvailable: function() {
+                try {
+                    if (typeof(Storage) === "undefined" || !window.localStorage) return false;
+                    localStorage.setItem('__test__', 'test');
+                    localStorage.removeItem('__test__');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            },
+            
+            // Проверка доступности IndexedDB
+            isIndexedDBAvailable: function() {
+                return 'indexedDB' in window;
+            },
+            
+            // Сохранение в IndexedDB
+            saveToIndexedDB: function(data) {
+                return new Promise((resolve, reject) => {
+                    if (!this.isIndexedDBAvailable()) {
+                        reject(new Error('IndexedDB недоступен'));
+                        return;
+                    }
+                    const request = indexedDB.open('mafiaChatDB', 1);
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        const db = request.result;
+                        const transaction = db.transaction(['chatHistory'], 'readwrite');
+                        const store = transaction.objectStore('chatHistory');
+                        const putRequest = store.put({ id: 1, messages: data });
+                        putRequest.onsuccess = () => resolve();
+                        putRequest.onerror = () => reject(putRequest.error);
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('chatHistory')) {
+                            db.createObjectStore('chatHistory', { keyPath: 'id' });
+                        }
+                    };
+                });
+            },
+            
+            // Загрузка из IndexedDB
+            loadFromIndexedDB: function() {
+                return new Promise((resolve, reject) => {
+                    if (!this.isIndexedDBAvailable()) {
+                        reject(new Error('IndexedDB недоступен'));
+                        return;
+                    }
+                    const request = indexedDB.open('mafiaChatDB', 1);
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        const db = request.result;
+                        const transaction = db.transaction(['chatHistory'], 'readonly');
+                        const store = transaction.objectStore('chatHistory');
+                        const getRequest = store.get(1);
+                        getRequest.onsuccess = () => {
+                            if (getRequest.result) {
+                                resolve(getRequest.result.messages);
+                            } else {
+                                resolve(null);
+                            }
+                        };
+                        getRequest.onerror = () => reject(getRequest.error);
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('chatHistory')) {
+                            db.createObjectStore('chatHistory', { keyPath: 'id' });
+                        }
+                    };
+                });
+            },
+            
+            // Сохранение истории (пробует все методы)
+            saveHistory: function(messagesData) {
+                // 1. Пробуем localStorage
+                if (this.isLocalStorageAvailable()) {
+                    try {
+                        localStorage.setItem('chat_history', JSON.stringify(messagesData));
+                        console.log('[CHAT] Сохранено в localStorage');
+                    } catch (e) {
+                        console.warn('[CHAT] Ошибка сохранения в localStorage:', e);
+                    }
+                }
+                
+                // 2. Пробуем IndexedDB (для мобильных)
+                if (this.isIndexedDBAvailable()) {
+                    this.saveToIndexedDB(messagesData).then(() => {
+                        console.log('[CHAT] Сохранено в IndexedDB');
+                    }).catch(e => {
+                        console.warn('[CHAT] Ошибка сохранения в IndexedDB:', e);
+                    });
+                }
+            },
+            
+            // Загрузка истории (пробует все методы)
+            loadHistory: async function() {
+                // 1. Пробуем localStorage
+                if (this.isLocalStorageAvailable()) {
+                    try {
+                        const saved = localStorage.getItem('chat_history');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            console.log('[CHAT] История загружена из localStorage:', parsed.length, 'сообщений');
+                            return parsed;
+                        }
+                    } catch (e) {
+                        console.warn('[CHAT] Ошибка загрузки из localStorage:', e);
+                    }
+                }
+                
+                // 2. Пробуем IndexedDB (для мобильных)
+                if (this.isIndexedDBAvailable()) {
+                    try {
+                        const saved = await this.loadFromIndexedDB();
+                        if (saved && saved.length > 0) {
+                            console.log('[CHAT] История загружена из IndexedDB:', saved.length, 'сообщений');
+                            // Синхронизируем с localStorage если доступен
+                            if (this.isLocalStorageAvailable()) {
+                                try {
+                                    localStorage.setItem('chat_history', JSON.stringify(saved));
+                                } catch (e) {}
+                            }
+                            return saved;
+                        }
+                    } catch (e) {
+                        console.warn('[CHAT] Ошибка загрузки из IndexedDB:', e);
+                    }
+                }
+                
+                console.log('[CHAT] История не найдена');
+                return null;
+            }
+        };
+        
+        function loadHistory() { 
+            return storage.loadHistory().then(loadedMessages => {
+                if (loadedMessages && loadedMessages.length > 0) {
+                    messages = loadedMessages;
+                    console.log('[CHAT] История успешно загружена:', messages.length, 'сообщений');
+                    // Рендерим историю сразу после загрузки
+                    renderMessages();
+                    scrollToBottom();
+                } else {
+                    messages = [];
+                }
+                return loadedMessages;
+            }).catch(e => {
+                console.error('[CHAT] Критическая ошибка загрузки истории:', e);
+                messages = [];
+                return null;
+            });
+        }
         function openTelegramLink() { window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank'); }
         
         // Инициализация прокрутки чипсов (колесико мыши + drag + свайп)
@@ -2048,8 +2233,24 @@
             lastBotResponse = "";
             unreadCount = 0;
             
-            // Очищаем localStorage
-            localStorage.removeItem('chat_history');
+            // Очищаем все хранилища (localStorage + IndexedDB)
+            try {
+                // Очищаем localStorage
+                if (storage.isLocalStorageAvailable()) {
+                    localStorage.removeItem('chat_history');
+                    console.log('[CHAT] localStorage очищен');
+                }
+                // Очищаем IndexedDB
+                if (storage.isIndexedDBAvailable()) {
+                    storage.saveToIndexedDB([]).then(() => {
+                        console.log('[CHAT] IndexedDB очищен');
+                    }).catch(e => {
+                        console.warn('[CHAT] Ошибка очистки IndexedDB:', e);
+                    });
+                }
+            } catch (e) {
+                console.error('[CHAT] Ошибка очистки хранилищ:', e);
+            }
             
             // Очищаем область сообщений
             els.area.innerHTML = '';
