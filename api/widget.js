@@ -93,13 +93,17 @@ module.exports = (req, res) => {
             bubbleIsVisible = isVisible;
             if (isVisible) {
                 // Баббл виден - увеличиваем iframe чтобы он не обрезался
-                // Баббл находится на bottom: 80px от кнопки, нужна высота ~280px
+                // Баббл находится на bottom: 80px от кнопки, нужна высота ~350px
+                // Ширина должна быть достаточной для баббла (~320px)
                 // Но только если чат закрыт (если чат открыт, размер уже большой)
                 if (!chatIsOpen) {
-                    widgetContainer.style.width = '320px';
-                    widgetContainer.style.height = '300px';
-                    iframe.style.width = '320px';
-                    iframe.style.height = '300px';
+                    widgetContainer.style.width = '350px';
+                    widgetContainer.style.height = '400px';
+                    iframe.style.width = '350px';
+                    iframe.style.height = '400px';
+                    // Убеждаемся что overflow visible для показа баббла
+                    widgetContainer.style.overflow = 'visible';
+                    iframe.style.overflow = 'visible';
                 }
             } else {
                 // Баббл скрыт - уменьшаем до минимума (только если чат закрыт)
@@ -120,14 +124,18 @@ module.exports = (req, res) => {
                 widgetContainer.style.height = '700px';
                 iframe.style.width = '400px';
                 iframe.style.height = '700px';
+                widgetContainer.style.overflow = 'visible';
+                iframe.style.overflow = 'visible';
             } else {
                 // Чат закрыт - проверяем состояние баббла
                 if (bubbleIsVisible) {
                     // Баббл виден - оставляем размер для баббла
-                    widgetContainer.style.width = '320px';
-                    widgetContainer.style.height = '300px';
-                    iframe.style.width = '320px';
-                    iframe.style.height = '300px';
+                    widgetContainer.style.width = '350px';
+                    widgetContainer.style.height = '400px';
+                    iframe.style.width = '350px';
+                    iframe.style.height = '400px';
+                    widgetContainer.style.overflow = 'visible';
+                    iframe.style.overflow = 'visible';
                 } else {
                     // Баббл скрыт - уменьшаем до минимума
                     widgetContainer.style.width = '80px';
